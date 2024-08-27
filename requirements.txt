@@ -1,4 +1,4 @@
 fastapi
 sqlalchemy
 tqdm
-
+boto3

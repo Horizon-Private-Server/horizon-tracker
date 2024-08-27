@@ -1,18 +1,18 @@
 from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException
-from sqlalchemy.orm import Session
 
-from app.database import SessionLocal, engine, Base
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import Session, sessionmaker
 
-from app.routers import crud
+SQLALCHEMY_DATABASE_URL = "postgresql://user:password@postgresserver/db"
 
-from app.schemas import (
-    User as UserSchema,
-    Item as ItemSchema,
-    UserCreate as UserCreateSchema,
-    ItemCreate as ItemCreateSchema
-)
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+Base = declarative_base()
+
 
 Base.metadata.create_all(bind=engine)
 
@@ -32,37 +32,3 @@ def get_db():
     finally:
         db.close()
 
-
-@app.post("/users", response_model=UserSchema)
-def create_user(user: UserCreateSchema, db: Session = Depends(get_db)):
-    db_user = crud.get_user_by_email(db, email=user.email)
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    return crud.create_user(db=db, user=user)
-
-
-@app.get("/users", response_model=List[UserSchema])
-def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    users = crud.get_users(db, skip=skip, limit=limit)
-    return users
-
-
-@app.get("/users/{user_id}", response_model=UserSchema)
-def read_user(user_id: int, db: Session = Depends(get_db)):
-    db_user = crud.get_user(db, user_id=user_id)
-    if db_user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    return db_user
-
-
-@app.post("/users/{user_id}/items", response_model=ItemSchema)
-def create_item_for_user(
-    user_id: int, item: ItemCreateSchema, db: Session = Depends(get_db)
-):
-    return crud.create_user_item(db=db, item=item, user_id=user_id)
-
-
-@app.get("/items", response_model=List[ItemSchema])
-def read_items(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    items = crud.get_items(db, skip=skip, limit=limit)
-    return items
