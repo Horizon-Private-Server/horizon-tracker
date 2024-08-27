@@ -1,4 +1,6 @@
-fastapi
+fastapi[standard]
 sqlalchemy
 tqdm
 boto3
+botocore
+psycopg2

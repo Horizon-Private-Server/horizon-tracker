@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, Any
 
 from fastapi import Depends, FastAPI, HTTPException
 
@@ -6,14 +6,18 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, sessionmaker
 
-SQLALCHEMY_DATABASE_URL = "postgresql://user:password@postgresserver/db"
+from app.utils.general import read_environment_variables
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+
+CREDENTIALS: Dict[str, Any] = read_environment_variables()
+
+SQLALCHEMY_DATABASE_URL = f"postgresql://{CREDENTIALS['database_username']}:{CREDENTIALS['database_password']}" \
+                          f"@{CREDENTIALS['database_host']}/{CREDENTIALS['database_name']}"
+
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
-
-
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -23,7 +27,6 @@ app = FastAPI()
 async def root():
     return {"message": "Hello World"}
 
-
 # Dependency
 def get_db():
     db = SessionLocal()
@@ -31,4 +34,3 @@ def get_db():
         yield db
     finally:
         db.close()
-

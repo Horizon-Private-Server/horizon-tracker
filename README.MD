@@ -164,6 +164,7 @@ Create a file called `env.json` in the root directory of the `horizon-tracker` f
 and paste in the following contents.
 ```json
 {
+  "region": "us-east-1",
   "environment": "tracker/credentials/dev",
   "database_host": "localhost",
   "database_port": 5432,
@@ -187,7 +188,15 @@ and paste in the following contents.
 > The production environment will will have a single entry `environment`.
 > The application will check to see if the name `environment` ends with `dev`. If so, it will scan the same JSON file for the remaining fields, otherwise, it will reach out to AWS.
 
-#### Style Guide Recommendation
+### Run Development Application
+
+To launch the application, open a terminal window in IDE or in browser.
+Ensure that the virtual environment is activated (this should be activated by default if in an IDE).
+Run the command `fastapi dev app/main.py`
+
+> When in development mode, any time a file is modified (saved), the development server will reload (killing any active connections, including WebSocket connections).
+
+### Style Guide Recommendation
 
 When contributing to this repository, it is important to keep a consistent style to maintain code readability.
 Here are a few points to help keep this repository easily readable.
