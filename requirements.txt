@@ -1,5 +1,6 @@
 fastapi[standard]
 sqlalchemy
+sqlalchemy_utils
 alembic
 tqdm
 boto3

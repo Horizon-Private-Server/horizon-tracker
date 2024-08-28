@@ -11,7 +11,8 @@ from app.database import CREDENTIALS
 
 from horizon.middleware_api import (
     authenticate,
-    get_all_accounts, get_account_basic_stats
+    get_all_accounts,
+    get_account_basic_stats
 )
 
 # Prevent requests from spamming to the console.
@@ -42,7 +43,7 @@ if __name__ == "__main__":
 
     all_stats: Dict = dict()
 
-    for leaderboard_item in tqdm(all_players):
+    for leaderboard_item in tqdm(all_players, desc="Pulling stats from Horizon Production..."):
         all_stats[leaderboard_item["AccountId"]] = get_account_basic_stats(
             protocol=protocol,
             host=host,
