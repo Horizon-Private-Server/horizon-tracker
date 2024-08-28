@@ -130,7 +130,7 @@ class DeadlockedVehicleStats(Base):
     player = relationship("DeadlockedPlayer", uselist=False, back_populates="vehicle_stats")
 
     roadkills = Column(Integer)
-    vehicle_squats = Column(Integer)
+    squats = Column(Integer)
 
 # Custom Stats
 # TODO
