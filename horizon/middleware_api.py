@@ -1,5 +1,5 @@
 import json
-from typing import Dict, Any, List, Union, Optional
+from typing import Optional
 
 import requests
 
@@ -19,7 +19,7 @@ def authenticate(protocol: str, host: str, username: str, password: str) -> str:
 
     authentication_url: str = f"{protocol}://{host}/Account/authenticate"
 
-    authentication_body: Dict[str, str] = {
+    authentication_body: dict[str, str] = {
         "AccountName": username,
         "Password": password
     }
@@ -30,12 +30,12 @@ def authenticate(protocol: str, host: str, username: str, password: str) -> str:
         verify=protocol != "https"
     )
 
-    auth_response_json: Dict[str, Any] = json.loads(auth_response.text)
+    auth_response_json: dict[str, any] = json.loads(auth_response.text)
 
     return auth_response_json["Token"]
 
 
-def get_all_accounts(protocol: str, host: str, app_id: Union[str, int], token: str) -> List[Dict[str, Any]]:
+def get_all_accounts(protocol: str, host: str, app_id: str | int, token: str) -> list[dict[str, any]]:
     """
     Makes a request to the Horizon Middleware leaderboard API which functionally
     make a medium-weight list of all users with basic stats.
@@ -53,7 +53,7 @@ def get_all_accounts(protocol: str, host: str, app_id: Union[str, int], token: s
     return json.loads(leaderboard_response.text)
 
 
-def get_account_basic_stats(protocol: str, host: str, account_id: Union[str, int], app_id: Union[str, int], token: str) -> Optional[Dict[str, Any]]:
+def get_account_basic_stats(protocol: str, host: str, account_id: str | int, app_id: str | int, token: str) -> Optional[dict[str, any]]:
     """
     Makes a request to the Horizon Middleware account API which returns
     all basic stats for a user (including vanilla and custom stats).
@@ -61,7 +61,7 @@ def get_account_basic_stats(protocol: str, host: str, account_id: Union[str, int
     :param protocol: "HTTP" or "HTTPS".
     :param host: Host name and optional port of the target Horizon Middleware server
         (i.e., "stats.rac-horizon.com" or "111.222.111.222:1234").
-    :account_id: The Horizon Account ID to lookup for detailed stats.
+    :param account_id: The Horizon Account ID to lookup for detailed stats.
     :param app_id: The Horizon App ID to filter by.
     :param token: The requesting user's authentication token.
     :return:

@@ -1,6 +1,6 @@
-from typing import Dict
+import math
 
-vanilla_stats_map: Dict[int, Dict[str, str]] = {
+vanilla_stats_map: dict[int, dict[str, str]] = {
     0: {"label": "", "field": "", "table": ""},
     1: {"label": "", "field": "", "table": ""},
     2: {"label": "Overall Rank", "field": "rank", "table": "overall_stats"},
@@ -123,4 +123,4 @@ def convert_rank_to_skill_level(rank: int) -> float:
     while rank > skill_level_table[i]:
         i += 1
 
-    return round(i + ((rank - skill_level_table[i - 1]) / (skill_level_table[i] - skill_level_table[i - 1])), 2)
+    return math.floor((i + ((rank - skill_level_table[i - 1]) / (skill_level_table[i] - skill_level_table[i - 1]))) * 100) / 100

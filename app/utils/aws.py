@@ -1,12 +1,12 @@
-from typing import Optional, Dict, Any
 import json
 import base64
+from typing import Optional
 
 import boto3
 from botocore.exceptions import ClientError
 
 
-def get_secrets(secret: Optional[str] = None, region_name: Optional[str] = None) -> Dict[str, Any]:
+def get_secrets(secret: Optional[str] = None, region_name: Optional[str] = None) -> dict[str, any]:
     """
     Reaches out to AWS Secrets Manager at the provided region with the provided secret name and returns the results,
     if applicable, as a dictionary.

@@ -2,7 +2,6 @@
 This script dataloads the Postgres database from a JSON output.
 """
 import json
-from typing import Dict
 
 from tqdm import tqdm
 
@@ -12,7 +11,7 @@ from app.utils.query_helpers import update_deadlocked_player_vanilla_stats
 if __name__ == "__main__":
 
     with open("stats.json") as stream:
-        all_stats: Dict[str, Dict] = json.load(stream)
+        all_stats: dict[str, dict] = json.load(stream)
 
     for account_id in tqdm(all_stats, desc="Ingesting data into Postgres..."):
         account_full = all_stats[account_id]

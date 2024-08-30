@@ -59,6 +59,7 @@ If you haven't already, you will also need to install [Git](https://git-scm.com/
 
 The backend is written in Python and will require a local Python interpreter to work.
 We recommend downloading and installing the latest LTS version of [Python](https://www.python.org/downloads/).
+> Minimum require Python version is 3.12.
 
 Once installed verify that Python is working by running the Terminal/PowerShell command `python --version`.
 > Note: For Windows users, you may need to restart Windows Explorer or perform a system reboot if the Python installer does not update your environment variables.
@@ -226,8 +227,8 @@ Here are a few points to help keep this repository easily readable.
    1. Type hints help detect errors before they happen.
    2. FastAPI is specifically built to leverage type hints.
    3. More specificity is usually better than less specificity.
-   4. When referring to non-primitive types, use the version from the `typing` module.
-      1. (i.e., `my_list: List[str] = list()` instead of `my_list: list[str] = list()`).
+   4. Avoid using primitive or collection types from the `typing` module.
+      1. (i.e., `my_list: list[str] = list()` instead of `my_list: List[str] = list()`).
 4. Please minimize the use of complex list comprehensions and dictionary comprehensions.
    1. One-liners are great, but if you need to stick a debug breakpoint in the middle, consider making it a traditional loop instead.
 5. Please write docstrings for your functions and for your API views.

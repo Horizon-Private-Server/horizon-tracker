@@ -3,8 +3,6 @@ This script connects to the prod Horizon Middleware and dumps the full stats of 
 """
 import json
 
-from typing import Dict
-
 from tqdm import tqdm
 
 from app.database import CREDENTIALS
@@ -41,7 +39,7 @@ if __name__ == "__main__":
         token=token
     )
 
-    all_stats: Dict = dict()
+    all_stats: dict = dict()
 
     for leaderboard_item in tqdm(all_players, desc="Pulling stats from Horizon Production..."):
         all_stats[leaderboard_item["AccountId"]] = get_account_basic_stats(

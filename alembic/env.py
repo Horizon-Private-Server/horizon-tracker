@@ -1,5 +1,4 @@
 from logging.config import fileConfig
-from typing import Dict, Any
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
@@ -13,7 +12,7 @@ from app.utils.general import read_environment_variables
 config = context.config
 
 # Generate the database path URL string.
-CREDENTIALS: Dict[str, Any] = read_environment_variables()
+CREDENTIALS: dict[str, any] = read_environment_variables()
 
 SQLALCHEMY_DATABASE_URL = f"postgresql://{CREDENTIALS['database_username']}:{CREDENTIALS['database_password']}" \
                           f"@{CREDENTIALS['database_host']}/{CREDENTIALS['database_name']}"

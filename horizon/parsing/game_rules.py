@@ -1,9 +1,8 @@
-from typing import Dict
 
 
 class WeaponRules:
 
-    def __init__(self, game_json: Dict):
+    def __init__(self, game_json: dict):
         field: int = game_json["GenericField6"]
 
         self._dual_vipers: bool = bool(field & 0x00000080)
@@ -74,7 +73,7 @@ class WeaponRules:
 
 class VehicleRules:
 
-    def __init__(self, game_json: Dict):
+    def __init__(self, game_json: dict):
         field: int = game_json["GenericField6"]
 
         self._hoverbike: bool = bool(field & 0x00000001)
@@ -113,7 +112,7 @@ class VehicleRules:
 
 class GameRules:
 
-    def __init__(self, game_json: Dict):
+    def __init__(self, game_json: dict):
 
         self._chargeboots: bool = bool(game_json["GenericField6"] & 0x00200000)
 

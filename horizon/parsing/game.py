@@ -1,10 +1,9 @@
-from typing import List, Dict
 from horizon.parsing.game_rules import GameRules
 
 
 class Game:
 
-    def __init__(self, game_json: Dict):
+    def __init__(self, game_json: dict):
         self._id = int(game_json["Id"])
         self._game_id = int(game_json["GameId"])
         self._app_id = int(game_json["AppId"])
@@ -55,7 +54,7 @@ class Game:
         return self._max_players
 
     @property
-    def starting_players(self) -> List[int]:
+    def starting_players(self) -> list[int]:
         """
         List of player IDs for all starting players.
         """

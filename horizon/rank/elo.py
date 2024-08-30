@@ -1,33 +1,33 @@
 import math
 from itertools import permutations
-from typing import Dict, List, Collection, Any, Tuple
+from typing import Collection, Any
 
 DEFAULT = 400
 K = 100
 
 
-def win_rating(winner: int, loser: int, k=K):
+def win_rating(winner: float, loser: float, k=K):
     expected, _ = probabilities(winner, loser)
     actual = 1.0
     return winner + (k * (actual - expected))
 
 
-def loss_rating(winner: int, loser: int, k=K):
+def loss_rating(winner: float, loser: float, k=K):
     expected, _ = probabilities(winner, loser)
     actual = 0.0
     result = winner + (k * (actual - expected))
     return result if result > 0 else 0
 
 
-def probability(_r1: int, _r2: int) -> float:
+def probability(_r1: float, _r2: float) -> float:
     return 1.0 / (1.0 + pow(10, ((_r1 - _r2) / DEFAULT)))
 
 
-def probabilities(rating1: int, rating2: int) -> (float, float):
+def probabilities(rating1: float, rating2: float) -> (float, float):
     return probability(rating1, rating2), probability(rating2, rating1)
 
 
-def compute_elo(players: List[Dict]) -> List[Dict]:
+def compute_elo(players: list[dict]) -> list[dict]:
 
     sorted_players = list(sorted(players, key=lambda _player: _player["score"], reverse=True))
 
@@ -59,7 +59,7 @@ def compute_elo(players: List[Dict]) -> List[Dict]:
     return winners + losers
 
 
-def generate_teams(players: Collection[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]], ...]:
+def generate_teams(players: Collection[dict[str, Any]]) -> tuple[list[dict[str, Any]], ...]:
     """
     Generates 2 even teams based on the average Elo rating of players in the source group.
 
@@ -69,12 +69,12 @@ def generate_teams(players: Collection[Dict[str, Any]]) -> Tuple[List[Dict[str, 
 
     assert len(players) % 2 == 0, "Teams must be even."
 
-    combination_lookup: Dict[float, Any] = dict()
+    combination_lookup: dict[float, Any] = dict()
     lowest: float = float("inf")
 
     for combination in permutations(players, len(players)):
-        team1: Collection[Dict[str, Any]] = combination[0:int(len(combination)/2)]
-        team2: Collection[Dict[str, Any]] = combination[int(len(combination)/2):len(combination)]
+        team1: Collection[dict[str, Any]] = combination[0:int(len(combination)/2)]
+        team2: Collection[dict[str, Any]] = combination[int(len(combination)/2):len(combination)]
         avg_elo1: float = sum([p["rank"] for p in team1]) / len(team1)
         avg_elo2: float = sum([p["rank"] for p in team2]) / len(team2)
 

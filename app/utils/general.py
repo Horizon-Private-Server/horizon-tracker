@@ -1,12 +1,11 @@
 from pathlib import Path
 import json
 import copy
-from typing import Dict, Any
 
 from app.utils.aws import get_secrets
 
 
-def read_environment_variables() -> Dict[str, Any]:
+def read_environment_variables() -> dict[str, any]:
     """
     Scans for 'env.json' and pulls in environment details from that file. If 'env.json' is not found,
     this function raises an AssertionError. The environment file requires 2 named keys 'environment',
@@ -24,7 +23,7 @@ def read_environment_variables() -> Dict[str, Any]:
     assert "env.json" in [path.name for path in Path().iterdir()], "env.json not found in root folder."
 
     with open("env.json") as stream:
-        environment: Dict[str, Any] = json.load(stream)
+        environment: dict[str, any] = json.load(stream)
 
     assert "environment" in environment, "Variable 'environment' not found in env.json."
     assert "region" in environment, "Variable 'region' not found in env.json."
@@ -33,7 +32,7 @@ def read_environment_variables() -> Dict[str, Any]:
     region_name: str = environment["region"]
 
     if environment_name.lower().endswith("dev"):
-        credentials: Dict[str, Any] = copy.deepcopy(environment)
+        credentials: dict[str, any] = copy.deepcopy(environment)
         del credentials["environment"]
         del credentials["region"]
         return credentials
