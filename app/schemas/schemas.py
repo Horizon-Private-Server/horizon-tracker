@@ -8,6 +8,6 @@ class Pagination[T](BaseModel):
 
 class LeaderboardEntry(BaseModel):
     horizon_id: int
-    name: str
+    username: str
     rank: int
     score: int
