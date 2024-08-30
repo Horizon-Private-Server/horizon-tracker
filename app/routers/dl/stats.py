@@ -50,7 +50,7 @@ def deadlocked_leaderboard(domain: str, stat: str, page: int = 1, session: Sessi
         raise HTTPException(status_code=400, detail=f"Invalid stat field '{stat}'.")
 
     if page < 1:
-        page = 1
+        page = 0
     else:
         page -= 1
 

@@ -1,10 +1,27 @@
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import SessionLocal
 
 from app.routers.dl.stats import router as deadlocked_stats_router
 
+ALLOWED_ORIGINS: list[str] = [
+    "https://www.rac-horizon.com",
+    "https://rac-horizon.com",
+    "http://localhost",
+    "http://localhost:8080",
+    "http://localhost:3000"
+]
+
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Add sub-APIs.
 app.include_router(deadlocked_stats_router)

@@ -127,6 +127,8 @@ class DeadlockedWeaponStats(Base):
     b6_obliterator_deaths = Column(Integer, default=0, nullable=False)
     scorpion_flail_kills = Column(Integer, default=0, nullable=False)
     scorpion_flail_deaths = Column(Integer, default=0, nullable=False)
+    holoshield_launcher_kills = Column(Integer, default=0, nullable=False)
+    holoshield_launcher_deaths = Column(Integer, default=0, nullable=False)
 
 
 class DeadlockedVehicleStats(Base):
