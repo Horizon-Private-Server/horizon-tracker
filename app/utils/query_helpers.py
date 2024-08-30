@@ -7,7 +7,8 @@ from sqlalchemy.orm import Session, Query, DeclarativeBase
 from app.models.dl import DeadlockedPlayer, DeadlockedOverallStats
 from app.models.dl.deadlocked_player import DeadlockedWeaponStats, DeadlockedJuggernautStats, DeadlockedKOTHStats, \
     DeadlockedCTFStats, DeadlockedConquestStats, DeadlockedDeathmatchStats, DeadlockedVehicleStats
-from horizon.parsing.deadlocked_stats import vanilla_stats_map
+from app.schemas.schemas import StatOffering
+from horizon.parsing.deadlocked_stats import vanilla_stats_map, custom_stats_map
 
 
 def update_deadlocked_player_vanilla_stats(
@@ -49,7 +50,7 @@ def query_count(query: Query) -> int:
     return query.session.execute(counter).scalar()
 
 
-@functools.lru_cache(maxsize=None)
+@functools.cache
 def get_stat_domains() -> dict[str, type[DeclarativeBase]]:
     return {
         "overall": DeadlockedOverallStats,
@@ -63,7 +64,7 @@ def get_stat_domains() -> dict[str, type[DeclarativeBase]]:
     }
 
 
-@functools.lru_cache(maxsize=32, typed=True)
+@functools.cache
 def get_available_stats_for_domain(domain: type[DeclarativeBase]) -> list[str]:
 
     excess_columns = ("player", "player_id", "registry", "metadata", "id")
@@ -74,3 +75,36 @@ def get_available_stats_for_domain(domain: type[DeclarativeBase]) -> list[str]:
             set(dir(DeclarativeBase)) ^ set(dir(domain))
         )
     )
+
+
+@functools.cache
+def compute_stat_offerings() -> list[StatOffering]:
+    offerings: list[StatOffering] = list()
+
+    for stat_map in vanilla_stats_map:
+        stat = vanilla_stats_map[stat_map]
+
+        if any(stat[_key] == "" for _key in stat):
+            continue
+
+        offerings.append(StatOffering(
+            domain=stat["table"].replace("_stats", ""),
+            stat=stat["field"],
+            label=stat["label"],
+            custom=False
+        ))
+
+    for stat_map in custom_stats_map:
+        stat = custom_stats_map[stat_map]
+
+        if any(stat[_key] == "" for _key in stat):
+            continue
+
+        offerings.append(StatOffering(
+            domain=stat["table"].replace("_stats", ""),
+            stat=stat["field"],
+            label=stat["label"],
+            custom=True
+        ))
+
+    return offerings

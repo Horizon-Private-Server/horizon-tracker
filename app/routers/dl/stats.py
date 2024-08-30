@@ -5,8 +5,9 @@ from sqlalchemy.orm import Session, Query, DeclarativeBase
 
 from app.database import SessionLocal
 from app.models.dl import DeadlockedPlayer
-from app.schemas.schemas import Pagination, LeaderboardEntry
-from app.utils.query_helpers import get_stat_domains, get_available_stats_for_domain
+from app.schemas.schemas import Pagination, LeaderboardEntry, StatOffering
+from app.utils.query_helpers import get_stat_domains, get_available_stats_for_domain, compute_stat_offerings
+from horizon.parsing.deadlocked_stats import vanilla_stats_map, custom_stats_map
 
 router = APIRouter(prefix="/api/dl/stats", tags=["deadlocked-stats"])
 
@@ -20,9 +21,14 @@ def get_db():
         db.close()
 
 
-@router.get("/")
-async def root():
-    return {"message": "Hello World"}
+@router.get("/offerings")
+def deadlocked_stat_offerings() -> Pagination[StatOffering]:
+    """
+    Provides a list of all stat offerings tracked by Horizon. These offerings include the appropriate domain, stat and
+    label for requesting leaderboard data.
+    """
+    offerings = compute_stat_offerings()
+    return Pagination[StatOffering](count=len(offerings), results=offerings)
 
 
 @router.get("/leaderboard/{domain}/{stat}")

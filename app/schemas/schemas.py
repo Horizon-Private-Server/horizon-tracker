@@ -11,3 +11,10 @@ class LeaderboardEntry(BaseModel):
     username: str
     rank: int
     score: int
+
+
+class StatOffering(BaseModel):
+    domain: str
+    stat: str
+    label: str
+    custom: bool
