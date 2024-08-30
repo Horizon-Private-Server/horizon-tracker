@@ -1,6 +1,14 @@
 import math
+from typing import TypedDict
 
-vanilla_stats_map: dict[int, dict[str, str]] = {
+
+class StatDetails(TypedDict):
+    label: str
+    field: str
+    table: str
+
+
+vanilla_stats_map: dict[int, StatDetails] = {
     0: {"label": "", "field": "", "table": ""},
     1: {"label": "", "field": "", "table": ""},
     2: {"label": "Overall Rank", "field": "rank", "table": "overall_stats"},
