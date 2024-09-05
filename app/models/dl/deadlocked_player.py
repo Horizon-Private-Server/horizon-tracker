@@ -84,7 +84,7 @@ class DeadlockedKOTHStats(Base):
     losses = Column(Integer, default=0, nullable=False)
     kills = Column(Integer, default=0, nullable=False)
     deaths = Column(Integer, default=0, nullable=False)
-    hill_time = Column(Integer, default=0, nullable=False)
+    time = Column(Integer, default=0, nullable=False)
 
 
 class DeadlockedJuggernautStats(Base):
@@ -100,7 +100,7 @@ class DeadlockedJuggernautStats(Base):
     losses = Column(Integer, default=0, nullable=False)
     kills = Column(Integer, default=0, nullable=False)
     deaths = Column(Integer, default=0, nullable=False)
-    juggernaut_time = Column(Integer, default=0, nullable=False)
+    time = Column(Integer, default=0, nullable=False)
 
 
 class DeadlockedWeaponStats(Base):

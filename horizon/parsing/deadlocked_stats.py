@@ -46,14 +46,14 @@ vanilla_stats_map: dict[int, StatDetails] = {
     34: {"label": "", "field": "", "table": ""},
     35: {"label": "KOTH Kills", "field": "kills", "table": "koth_stats"},
     36: {"label": "KOTH Deaths", "field": "deaths", "table": "koth_stats"},
-    37: {"label": "Hill Time", "field": "hill_time", "table": "koth_stats"},
+    37: {"label": "Hill Time", "field": "time", "table": "koth_stats"},
     38: {"label": "Juggernaut Rank", "field": "rank", "table": "juggernaut_stats"},
     39: {"label": "Juggernaut Wins", "field": "wins", "table": "juggernaut_stats"},
     40: {"label": "Juggernaut Losses", "field": "losses", "table": "juggernaut_stats"},
     41: {"label": "", "field": "", "table": ""},
     42: {"label": "Juggernaut Kills", "field": "kills", "table": "juggernaut_stats"},
     43: {"label": "Juggernaut Deaths", "field": "deaths", "table": "juggernaut_stats"},
-    44: {"label": "Juggernaut Time", "field": "juggernaut_time", "table": "juggernaut_stats"},
+    44: {"label": "Juggernaut Time", "field": "time", "table": "juggernaut_stats"},
     45: {"label": "Wrench Kills", "field": "wrench_kills", "table": "weapon_stats"},
     46: {"label": "Wrench Deaths", "field": "wrench_deaths", "table": "weapon_stats"},
     47: {"label": "", "field": "", "table": ""},
@@ -236,23 +236,25 @@ custom_stats_map: dict[int, StatDetails] = {
 }
 
 
-def convert_rank_to_skill_level(rank: int) -> float:
+def convert_rank_to_skill_level(rank: int) -> str:
     """
     Converts the numerical Deadlocked Rank into the common skill level number.
 
     :param rank: Integer rank of a user.
     :return: The corresponding skill level of the player.
     """
-
     skill_level_table = [0, 200, 800, 1600, 2500, 3500, 5000, 6500, 8000, 9500]
 
     if rank >= skill_level_table[9]:
-        return 10.00
+        return "10.00"
     if rank <= skill_level_table[0]:
-        return 1.00
+        return "1.00"
 
     i = 0
     while rank > skill_level_table[i]:
         i += 1
 
-    return math.floor((i + ((rank - skill_level_table[i - 1]) / (skill_level_table[i] - skill_level_table[i - 1]))) * 100) / 100
+    raw_skill_level: float = i + ((rank - skill_level_table[i - 1]) / (skill_level_table[i] - skill_level_table[i - 1]))
+    processed_skill_level: float = math.floor(raw_skill_level * 100) / 100
+
+    return f"{processed_skill_level:.2f}"

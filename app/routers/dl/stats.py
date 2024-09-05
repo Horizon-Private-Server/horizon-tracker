@@ -5,9 +5,20 @@ from sqlalchemy.orm import Session, Query, DeclarativeBase
 
 from app.database import SessionLocal
 from app.models.dl import DeadlockedPlayer
-from app.schemas.schemas import Pagination, LeaderboardEntry, StatOffering
+
+from app.schemas.schemas import (
+    Pagination,
+    LeaderboardEntry,
+    StatOffering,
+    DeadlockedPlayerDetailsSchema,
+    DeadlockedOverallStatsSchema,
+    DeadlockedDeathmatchStatsSchema,
+    DeadlockedConquestStatsSchema,
+    DeadlockedCTFStatsSchema,
+    DeadlockedGameModeWithTimeSchema,
+    DeadlockedWeaponStatsSchema, DeadlockedVehicleStatsSchema
+)
 from app.utils.query_helpers import get_stat_domains, get_available_stats_for_domain, compute_stat_offerings
-from horizon.parsing.deadlocked_stats import vanilla_stats_map, custom_stats_map
 
 router = APIRouter(prefix="/api/dl/stats", tags=["deadlocked-stats"])
 
@@ -75,4 +86,52 @@ def deadlocked_leaderboard(domain: str, stat: str, page: int = 1, session: Sessi
             for index, (result, score)
             in enumerate(results)
         ]
+    )
+
+@router.get("/player/{horizon_id}")
+def deadlocked_leaderboard(horizon_id: int, session: Session = Depends(get_db)) -> DeadlockedPlayerDetailsSchema:
+    """
+    Generate a paginated leaderboard (100 entries per page) for all Deadlocked stats. `domain` is a game mode or
+    collection of stats (e.g., conquest, ctf, weapon, vehicle, etc.) and `stat` is a field that belongs to the parent
+    stat domain. All domains and all stats are formatted in snake case.
+    """
+
+    query: Query = session.query(DeadlockedPlayer).filter_by(horizon_id=horizon_id)
+
+    stat_domains: dict[str, type[DeclarativeBase]] = get_stat_domains()
+    for domain in stat_domains:
+        stat_domain: type[DeclarativeBase] = stat_domains[domain]
+        query = query.join(stat_domain)
+
+
+    result: DeadlockedPlayer = query.first()
+
+    # TODO See if this can be compressed into a 1-liner that won't require future maintenance.
+    return DeadlockedPlayerDetailsSchema(
+        horizon_id=result.horizon_id,
+        username=result.username,
+        overall_stats=DeadlockedOverallStatsSchema(
+            **{field: getattr(result.overall_stats, field) for field in result.overall_stats.__dict__}
+        ),
+        deathmatch_stats=DeadlockedDeathmatchStatsSchema(
+            **{field: getattr(result.deathmatch_stats, field) for field in result.deathmatch_stats.__dict__}
+        ),
+        conquest_stats = DeadlockedConquestStatsSchema(
+            **{field: getattr(result.conquest_stats, field) for field in result.conquest_stats.__dict__}
+        ),
+        ctf_stats=DeadlockedCTFStatsSchema(
+            **{field: getattr(result.ctf_stats, field) for field in result.ctf_stats.__dict__}
+        ),
+        koth_stats = DeadlockedGameModeWithTimeSchema(
+            **{field: getattr(result.koth_stats, field) for field in result.koth_stats.__dict__}
+        ),
+        juggernaut_stats = DeadlockedGameModeWithTimeSchema(
+            **{field: getattr(result.juggernaut_stats, field) for field in result.juggernaut_stats.__dict__}
+        ),
+        weapon_stats=DeadlockedWeaponStatsSchema(
+            **{field: getattr(result.weapon_stats, field) for field in result.weapon_stats.__dict__}
+        ),
+        vehicle_stats=DeadlockedVehicleStatsSchema(
+            **{field: getattr(result.vehicle_stats, field) for field in result.vehicle_stats.__dict__}
+        )
     )
