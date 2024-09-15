@@ -6,7 +6,7 @@ import json
 from tqdm import tqdm
 
 from app.database import SessionLocal
-from app.utils.query_helpers import update_deadlocked_player_vanilla_stats
+from app.utils.query_helpers import update_deadlocked_player_vanilla_stats, update_deadlocked_player_custom_stats
 
 if __name__ == "__main__":
 
@@ -21,4 +21,11 @@ if __name__ == "__main__":
             player_id=account_id,
             player_name=account_full["AccountName"],
             wide_stats=account_full["AccountWideStats"]
+        )
+
+        update_deadlocked_player_custom_stats(
+            session=SessionLocal(),
+            player_id=account_id,
+            player_name=account_full["AccountName"],
+            wide_custom_stats=account_full["AccountCustomWideStats"]
         )

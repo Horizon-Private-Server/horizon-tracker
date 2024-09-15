@@ -17,7 +17,17 @@ from app.schemas.schemas import (
     DeadlockedConquestStatsSchema,
     DeadlockedCTFStatsSchema,
     DeadlockedGameModeWithTimeSchema,
-    DeadlockedWeaponStatsSchema, DeadlockedVehicleStatsSchema
+    DeadlockedWeaponStatsSchema,
+    DeadlockedVehicleStatsSchema,
+    DeadlockedHorizonStatsSchema,
+    DeadlockedSNDStatsSchema,
+    DeadlockedPayloadStatsSchema,
+    DeadlockedSpleefStatsSchema,
+    DeadlockedInfectedStatsSchema,
+    DeadlockedGungameStatsSchema,
+    DeadlockedInfiniteClimberStatsSchema,
+    DeadlockedSurvivalStatsSchema,
+    DeadlockedTrainingStatsSchema, DeadlockedSurvivalMapStatsSchema
 )
 from app.utils.query_helpers import get_stat_domains, get_available_stats_for_domain, compute_stat_offerings
 
@@ -119,6 +129,19 @@ def deadlocked_player(horizon_id: int, session: Session = Depends(get_db)) -> De
         "juggernaut_stats": DeadlockedGameModeWithTimeSchema,
         "weapon_stats": DeadlockedWeaponStatsSchema,
         "vehicle_stats": DeadlockedVehicleStatsSchema,
+
+        "horizon_stats": DeadlockedHorizonStatsSchema,
+        "snd_stats": DeadlockedSNDStatsSchema,
+        "payload_stats": DeadlockedPayloadStatsSchema,
+        "spleef_stats": DeadlockedSpleefStatsSchema,
+        "infected_stats": DeadlockedInfectedStatsSchema,
+        "gungame_stats": DeadlockedGungameStatsSchema,
+        "infinite_climber_stats": DeadlockedInfiniteClimberStatsSchema,
+        "survival_stats": DeadlockedSurvivalStatsSchema,
+        "survival_orxon_stats": DeadlockedSurvivalMapStatsSchema,
+        "survival_mountain_pass_stats": DeadlockedSurvivalMapStatsSchema,
+        "survival_veldin_stats": DeadlockedSurvivalMapStatsSchema,
+        "training_stats": DeadlockedTrainingStatsSchema,
     }
 
     # TODO This is a very convoluted one-liner, add better documentation.

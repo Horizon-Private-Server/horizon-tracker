@@ -1,1 +1,24 @@
-from app.models.dl.deadlocked_player import DeadlockedPlayer, DeadlockedOverallStats, Base
+from app.models.dl.deadlocked_player import (
+    DeadlockedPlayer,
+    DeadlockedOverallStats,
+    Base,
+    DeadlockedWeaponStats,
+    DeadlockedJuggernautStats,
+    DeadlockedKOTHStats,
+    DeadlockedCTFStats,
+    DeadlockedConquestStats,
+    DeadlockedDeathmatchStats,
+    DeadlockedVehicleStats,
+    DeadlockedHorizonStats,
+    DeadlockedSNDStats,
+    DeadlockedPayloadStats,
+    DeadlockedSpleefStats,
+    DeadlockedGungameStats,
+    DeadlockedInfiniteClimberStats,
+    DeadlockedInfectedStats,
+    DeadlockedSurvivalStats,
+    DeadlockedSurvivalOrxonStats,
+    DeadlockedSurvivalMountainPassStats,
+    DeadlockedSurvivalVeldinStats,
+    DeadlockedTrainingStats
+)
