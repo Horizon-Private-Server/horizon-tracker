@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy import column
 
 from sqlalchemy.orm import Session, Query, DeclarativeBase
@@ -89,7 +90,7 @@ def deadlocked_leaderboard(domain: str, stat: str, page: int = 1, session: Sessi
     )
 
 @router.get("/player/{horizon_id}")
-def deadlocked_leaderboard(horizon_id: int, session: Session = Depends(get_db)) -> DeadlockedPlayerDetailsSchema:
+def deadlocked_player(horizon_id: int, session: Session = Depends(get_db)) -> DeadlockedPlayerDetailsSchema:
     """
     Generate a paginated leaderboard (100 entries per page) for all Deadlocked stats. `domain` is a game mode or
     collection of stats (e.g., conquest, ctf, weapon, vehicle, etc.) and `stat` is a field that belongs to the parent
@@ -106,32 +107,30 @@ def deadlocked_leaderboard(horizon_id: int, session: Session = Depends(get_db)) 
 
     result: DeadlockedPlayer = query.first()
 
-    # TODO See if this can be compressed into a 1-liner that won't require future maintenance.
+    stat_schema_dictionary: dict[str, type[BaseModel]] = {
+        "overall_stats": DeadlockedOverallStatsSchema,
+        "deathmatch_stats": DeadlockedDeathmatchStatsSchema,
+        "conquest_stats": DeadlockedConquestStatsSchema,
+        "ctf_stats": DeadlockedCTFStatsSchema,
+        "koth_stats": DeadlockedGameModeWithTimeSchema,
+        "juggernaut_stats": DeadlockedGameModeWithTimeSchema,
+        "weapon_stats": DeadlockedWeaponStatsSchema,
+        "vehicle_stats": DeadlockedVehicleStatsSchema,
+    }
+
+    # TODO This is a very convoluted one-liner, add better documentation.
     return DeadlockedPlayerDetailsSchema(
         horizon_id=result.horizon_id,
         username=result.username,
-        overall_stats=DeadlockedOverallStatsSchema(
-            **{field: getattr(result.overall_stats, field) for field in result.overall_stats.__dict__}
-        ),
-        deathmatch_stats=DeadlockedDeathmatchStatsSchema(
-            **{field: getattr(result.deathmatch_stats, field) for field in result.deathmatch_stats.__dict__}
-        ),
-        conquest_stats = DeadlockedConquestStatsSchema(
-            **{field: getattr(result.conquest_stats, field) for field in result.conquest_stats.__dict__}
-        ),
-        ctf_stats=DeadlockedCTFStatsSchema(
-            **{field: getattr(result.ctf_stats, field) for field in result.ctf_stats.__dict__}
-        ),
-        koth_stats = DeadlockedGameModeWithTimeSchema(
-            **{field: getattr(result.koth_stats, field) for field in result.koth_stats.__dict__}
-        ),
-        juggernaut_stats = DeadlockedGameModeWithTimeSchema(
-            **{field: getattr(result.juggernaut_stats, field) for field in result.juggernaut_stats.__dict__}
-        ),
-        weapon_stats=DeadlockedWeaponStatsSchema(
-            **{field: getattr(result.weapon_stats, field) for field in result.weapon_stats.__dict__}
-        ),
-        vehicle_stats=DeadlockedVehicleStatsSchema(
-            **{field: getattr(result.vehicle_stats, field) for field in result.vehicle_stats.__dict__}
-        )
+        **{
+            stat_schema_key: stat_schema_dictionary[stat_schema_key](
+                **{
+                    field: getattr(getattr(result, stat_schema_key), field)
+                    for field
+                    in getattr(result, stat_schema_key).__dict__
+                }
+            )
+            for stat_schema_key
+            in stat_schema_dictionary
+        }
     )
