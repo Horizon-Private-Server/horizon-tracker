@@ -107,6 +107,9 @@ def deadlocked_player(horizon_id: int, session: Session = Depends(get_db)) -> De
 
     result: DeadlockedPlayer = query.first()
 
+    if result is None:
+        raise HTTPException(status_code=404, detail=f"Player with ID '{horizon_id}' not found.")
+
     stat_schema_dictionary: dict[str, type[BaseModel]] = {
         "overall_stats": DeadlockedOverallStatsSchema,
         "deathmatch_stats": DeadlockedDeathmatchStatsSchema,
