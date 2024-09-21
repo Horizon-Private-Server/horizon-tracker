@@ -8,7 +8,7 @@ class StatDetails(TypedDict):
     table: str
 
 
-vanilla_stats_map: dict[int, StatDetails] = {
+uya_vanilla_stats_map: dict[int, StatDetails] = {
     0: {'label': '', 'field': '', 'table': ''},
     1: {'label': 'Overall Rank', 'field': 'rank', 'table': 'overall_stats'},
     2: {'label': 'Wins', 'field': 'wins', 'table': 'overall_stats'},
