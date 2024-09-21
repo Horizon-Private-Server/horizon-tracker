@@ -5,33 +5,21 @@ from sqlalchemy import column
 from sqlalchemy.orm import Session, Query, DeclarativeBase
 
 from app.database import SessionLocal
-from app.models.dl import DeadlockedPlayer
+from app.models.uya import UyaPlayer
 
 from app.schemas.schemas import (
     Pagination,
     LeaderboardEntry,
     StatOffering,
-    DeadlockedPlayerDetailsSchema,
-    DeadlockedOverallStatsSchema,
-    DeadlockedDeathmatchStatsSchema,
-    DeadlockedConquestStatsSchema,
-    DeadlockedCTFStatsSchema,
-    DeadlockedGameModeWithTimeSchema,
-    DeadlockedWeaponStatsSchema,
-    DeadlockedVehicleStatsSchema,
-    DeadlockedHorizonStatsSchema,
-    DeadlockedSNDStatsSchema,
-    DeadlockedPayloadStatsSchema,
-    DeadlockedSpleefStatsSchema,
-    DeadlockedInfectedStatsSchema,
-    DeadlockedGungameStatsSchema,
-    DeadlockedInfiniteClimberStatsSchema,
-    DeadlockedSurvivalStatsSchema,
-    DeadlockedTrainingStatsSchema, DeadlockedSurvivalMapStatsSchema
+    UyaSiegeStatsSchema,
+    UyaDeathmatchStatsSchema,
+    UyaOverallStatsSchema,
+    UyaCTFStatsSchema,
+    UyaPlayerDetailsSchema
 )
 from app.utils.query_helpers import get_stat_domains, get_available_stats_for_domain, compute_stat_offerings
 
-router = APIRouter(prefix="/api/dl/stats", tags=["deadlocked-stats"])
+router = APIRouter(prefix="/api/uya/stats", tags=["uya-stats"])
 
 
 # Dependency
@@ -44,23 +32,23 @@ def get_db():
 
 
 @router.get("/offerings")
-def deadlocked_stat_offerings() -> Pagination[StatOffering]:
+def uya_stat_offerings() -> Pagination[StatOffering]:
     """
     Provides a list of all stat offerings tracked by Horizon. These offerings include the appropriate domain, stat and
     label for requesting leaderboard data.
     """
-    offerings = compute_stat_offerings('dl')
+    offerings = compute_stat_offerings('uya')
     return Pagination[StatOffering](count=len(offerings), results=offerings)
 
 
 @router.get("/leaderboard/{domain}/{stat}")
-def deadlocked_leaderboard(domain: str, stat: str, page: int = 1, session: Session = Depends(get_db)) -> Pagination[LeaderboardEntry]:
+def uya_leaderboard(domain: str, stat: str, page: int = 1, session: Session = Depends(get_db)) -> Pagination[LeaderboardEntry]:
     """
     Generate a paginated leaderboard (100 entries per page) for all Deadlocked stats. `domain` is a game mode or
     collection of stats (e.g., conquest, ctf, weapon, vehicle, etc.) and `stat` is a field that belongs to the parent
     stat domain. All domains and all stats are formatted in snake case.
     """
-    stat_domains: dict[str, type[DeclarativeBase]] = get_stat_domains('dl')
+    stat_domains: dict[str, type[DeclarativeBase]] = get_stat_domains('uya')
 
     if domain not in stat_domains:
         raise HTTPException(status_code=400, detail=f"Invalid stat domain '{domain}'.")
@@ -76,12 +64,12 @@ def deadlocked_leaderboard(domain: str, stat: str, page: int = 1, session: Sessi
     else:
         page -= 1
 
-    query: Query = session.query(DeadlockedPlayer) \
+    query: Query = session.query(UyaPlayer) \
         .join(stat_domain) \
         .add_columns(column(stat)) \
-        .order_by(getattr(stat_domain, stat).desc(), DeadlockedPlayer.horizon_id.asc())
+        .order_by(getattr(stat_domain, stat).desc(), UyaPlayer.horizon_id.asc())
 
-    results: list[tuple[DeadlockedPlayer, int]] = list(query.offset(100 * page).limit(100))
+    results: list[tuple[UyaPlayer, int]] = list(query.offset(100 * page).limit(100))
 
     count = query.count()
 
@@ -100,52 +88,35 @@ def deadlocked_leaderboard(domain: str, stat: str, page: int = 1, session: Sessi
     )
 
 @router.get("/player/{horizon_id}")
-def deadlocked_player(horizon_id: int, session: Session = Depends(get_db)) -> DeadlockedPlayerDetailsSchema:
+def uya_player(horizon_id: int, session: Session = Depends(get_db)) -> UyaPlayerDetailsSchema:
     """
     Generate a paginated leaderboard (100 entries per page) for all Deadlocked stats. `domain` is a game mode or
     collection of stats (e.g., conquest, ctf, weapon, vehicle, etc.) and `stat` is a field that belongs to the parent
     stat domain. All domains and all stats are formatted in snake case.
     """
 
-    query: Query = session.query(DeadlockedPlayer).filter_by(horizon_id=horizon_id)
+    query: Query = session.query(UyaPlayer).filter_by(horizon_id=horizon_id)
 
-    stat_domains: dict[str, type[DeclarativeBase]] = get_stat_domains('dl')
+    stat_domains: dict[str, type[DeclarativeBase]] = get_stat_domains('uya')
     for domain in stat_domains:
         stat_domain: type[DeclarativeBase] = stat_domains[domain]
         query = query.join(stat_domain)
 
 
-    result: DeadlockedPlayer = query.first()
+    result: UyaPlayer = query.first()
 
     if result is None:
         raise HTTPException(status_code=404, detail=f"Player with ID '{horizon_id}' not found.")
 
     stat_schema_dictionary: dict[str, type[BaseModel]] = {
-        "overall_stats": DeadlockedOverallStatsSchema,
-        "deathmatch_stats": DeadlockedDeathmatchStatsSchema,
-        "conquest_stats": DeadlockedConquestStatsSchema,
-        "ctf_stats": DeadlockedCTFStatsSchema,
-        "koth_stats": DeadlockedGameModeWithTimeSchema,
-        "juggernaut_stats": DeadlockedGameModeWithTimeSchema,
-        "weapon_stats": DeadlockedWeaponStatsSchema,
-        "vehicle_stats": DeadlockedVehicleStatsSchema,
-
-        "horizon_stats": DeadlockedHorizonStatsSchema,
-        "snd_stats": DeadlockedSNDStatsSchema,
-        "payload_stats": DeadlockedPayloadStatsSchema,
-        "spleef_stats": DeadlockedSpleefStatsSchema,
-        "infected_stats": DeadlockedInfectedStatsSchema,
-        "gungame_stats": DeadlockedGungameStatsSchema,
-        "infinite_climber_stats": DeadlockedInfiniteClimberStatsSchema,
-        "survival_stats": DeadlockedSurvivalStatsSchema,
-        "survival_orxon_stats": DeadlockedSurvivalMapStatsSchema,
-        "survival_mountain_pass_stats": DeadlockedSurvivalMapStatsSchema,
-        "survival_veldin_stats": DeadlockedSurvivalMapStatsSchema,
-        "training_stats": DeadlockedTrainingStatsSchema,
+        "overall_stats": UyaOverallStatsSchema,
+        "deathmatch_stats": UyaDeathmatchStatsSchema,
+        "siege_stats": UyaSiegeStatsSchema,
+        "ctf_stats": UyaCTFStatsSchema,
     }
 
     # TODO This is a very convoluted one-liner, add better documentation.
-    return DeadlockedPlayerDetailsSchema(
+    return UyaPlayerDetailsSchema(
         horizon_id=result.horizon_id,
         username=result.username,
         **{

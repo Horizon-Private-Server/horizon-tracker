@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database import SessionLocal
 
 from app.routers.dl.stats import router as deadlocked_stats_router
+from app.routers.uya.stats import router as uya_stats_router
 
 ALLOWED_ORIGINS: list[str] = [
     "https://www.rac-horizon.com",
@@ -25,6 +26,7 @@ app.add_middleware(
 
 # Add sub-APIs.
 app.include_router(deadlocked_stats_router)
+app.include_router(uya_stats_router)
 
 
 # Dependency

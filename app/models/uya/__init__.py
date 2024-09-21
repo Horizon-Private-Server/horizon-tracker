@@ -5,4 +5,5 @@ from app.models.uya.uya_player import (
     UyaWeaponStats,
     UyaSiegeStats,
     UyaCTFStats,
+    UyaDeathmatchStats,
 )

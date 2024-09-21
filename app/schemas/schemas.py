@@ -210,3 +210,62 @@ class DeadlockedPlayerDetailsSchema(BaseModel):
     survival_mountain_pass_stats: DeadlockedSurvivalMapStatsSchema
     survival_veldin_stats: DeadlockedSurvivalMapStatsSchema
     training_stats: DeadlockedTrainingStatsSchema
+
+
+
+class UyaStatsBase(BaseModel):
+    rank: int
+    wins: int
+    losses: int
+    wl_ratio: int
+    kills: int
+    deaths: int
+    suicides: int
+    kd_ratio: int
+    avg_kills: int
+    avg_deaths: int
+    avg_suicides: int
+    games_played: int
+
+class UyaSiegeStatsSchema(UyaStatsBase):
+    base_dmg: int
+    nodes: int
+    avg_nodes: int
+    avg_base_dmg: int
+
+class UyaDeathmatchStatsSchema(UyaStatsBase):
+    pass
+
+class UyaOverallStatsSchema(UyaStatsBase):
+    base_dmg: int
+    nodes: int
+    avg_nodes: int
+    avg_base_dmg: int
+    squats: int
+    avg_squats: int
+    sq_ratio: int
+    total_times_squatted: int
+    avg_squatted_on: int
+    sd_ratio: int
+    total_team_squats: int
+    avg_team_squats: int
+
+class UyaCTFStatsSchema(UyaStatsBase):
+    base_dmg: int
+    nodes: int
+    flag_captures: int
+    flag_saves: int
+    avg_nodes: int
+    avg_base_dmg: int
+    avg_flag_captures: int
+    avg_flag_saves: int
+
+class UyaPlayerDetailsSchema(BaseModel):
+
+    horizon_id: int
+    username: str
+
+    overall_stats: UyaOverallStatsSchema
+    deathmatch_stats: UyaDeathmatchStatsSchema
+    siege_stats: UyaSiegeStatsSchema
+    ctf_stats: UyaCTFStatsSchema
