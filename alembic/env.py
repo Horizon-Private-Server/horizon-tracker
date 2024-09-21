@@ -29,7 +29,8 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-from app.models.dl import Base
+from app.models.dl import *
+from app.models.uya import *
 target_metadata = Base.metadata
 # target_metadata = None
 
@@ -38,6 +39,9 @@ target_metadata = Base.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
+print("Tables being managed by Alembic:")
+for table_name in target_metadata.tables:
+    print(table_name)
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.

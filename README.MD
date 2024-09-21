@@ -175,7 +175,21 @@ and paste in the following contents.
   "horizon_middleware_protocol": "https",
   "horizon_middleware_host": <horizon_middleware_host>,
   "horizon_middleware_username": <your_horizon_middleware_username>,
-  "horizon_middleware_password": <your_horizon_middleware_password>
+  "horizon_middleware_password": <your_horizon_middleware_password>,
+  "dl": {
+    "horizon_middleware_protocol": "https",
+    "horizon_middleware_host": <horizon_middleware_host>,
+    "horizon_middleware_username": <your_horizon_middleware_username>,
+    "horizon_middleware_password": <your_horizon_middleware_password>,
+    "horizon_app_id": 11184
+  },
+  "uya": {
+    "horizon_middleware_protocol": "https",
+    "horizon_middleware_host": <horizon_middleware_host>,
+    "horizon_middleware_username": <your_horizon_middleware_username>,
+    "horizon_middleware_password": <your_horizon_middleware_password>,
+    "horizon_app_id": 10684
+  }
 }
 ```
 
@@ -242,8 +256,21 @@ Here are a few points to help keep this repository easily readable.
    3. `pathlib` is preferable to string paths when working with file I/O or networking.
 
 ### Generating Database Migrations with Alembic
+Run:
+```
+alembic revision --autogenerate
+```
+That will make a file under alembic/versions, in that file is the revision ID on line 3, that ID is a hash of the revision which is used to track versioning.
 
-TBD
+If you get an error running this, you need to upgrade:
+```
+alembic upgrade head
+```
+
+Run
+```
+alembic upgrade <revision_id>
+```
 
 ### Migrating the Database Version
 
