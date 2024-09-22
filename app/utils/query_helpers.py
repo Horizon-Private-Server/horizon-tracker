@@ -19,37 +19,55 @@ from app.models.dl import (
     DeadlockedTrainingStats
 )
 
+from app.models.uya import (
+    UyaPlayer,
+    UyaOverallStats,
+    UyaWeaponStats,
+    UyaSiegeStats,
+    UyaDeathmatchStats,
+    UyaCTFStats
+)
+
 from app.schemas.schemas import StatOffering
 from horizon.parsing.deadlocked_stats import vanilla_stats_map, custom_stats_map
+from horizon.parsing.uya_stats import uya_vanilla_stats_map
 
 
-def update_deadlocked_player_vanilla_stats(
+def update_player_vanilla_stats(
+    game: str,
     session: Session,
     player_id: int | str,
     player_name: str,
     wide_stats: list[int]
 ) -> None:
+    
+    if game == 'dl':
+        player_class = DeadlockedPlayer
+        stats_map = vanilla_stats_map
+    elif game == 'uya':
+        player_class = UyaPlayer
+        stats_map = uya_vanilla_stats_map
 
     assert len(wide_stats) == 100, "The provided wide stats length is not 100, please validate your input."
 
-    player: Optional[DeadlockedPlayer] = session.query(DeadlockedPlayer).filter_by(horizon_id=int(player_id)).first()
+    player = session.query(player_class).filter_by(horizon_id=int(player_id)).first()
 
     if player is None:
-        player = DeadlockedPlayer(username=player_name, horizon_id=player_id)
+        player = player_class(username=player_name, horizon_id=player_id)
         session.add(player)
         session.commit()
 
         # TODO This has a lot of code smell, but it's a simple way to ensure the existence of 1-1 tables.
-        update_deadlocked_player_vanilla_stats(session, player_id, player_name, wide_stats)
+        update_player_vanilla_stats(game, session, player_id, player_name, wide_stats)
     else:
 
         for index, stat in enumerate(wide_stats):
 
-            if vanilla_stats_map[index]["table"] == "" or vanilla_stats_map[index]["field"] == "":
+            if stats_map[index]["table"] == "" or stats_map[index]["field"] == "":
                 continue
 
-            stats_table_obj: type[DeclarativeBase] = getattr(player, vanilla_stats_map[index]["table"])
-            setattr(stats_table_obj, vanilla_stats_map[index]["field"], stat)
+            stats_table_obj: type[DeclarativeBase] = getattr(player, stats_map[index]["table"])
+            setattr(stats_table_obj, stats_map[index]["field"], stat)
 
         session.add(player)
         session.commit()
@@ -99,31 +117,41 @@ def query_count(query: Query) -> int:
 
 
 @functools.cache
-def get_stat_domains() -> dict[str, type[DeclarativeBase]]:
-    return {
-        "overall": DeadlockedOverallStats,
-        "deathmatch": DeadlockedDeathmatchStats,
-        "conquest": DeadlockedConquestStats,
-        "ctf": DeadlockedCTFStats,
-        "koth": DeadlockedKOTHStats,
-        "juggernaut": DeadlockedJuggernautStats,
-        "weapon": DeadlockedWeaponStats,
-        "vehicle": DeadlockedVehicleStats,
+def get_stat_domains(game: str) -> dict[str, type[DeclarativeBase]]:
+    stat_domain_dict: dict = {
+        "dl": {
+            "overall": DeadlockedOverallStats,
+            "deathmatch": DeadlockedDeathmatchStats,
+            "conquest": DeadlockedConquestStats,
+            "ctf": DeadlockedCTFStats,
+            "koth": DeadlockedKOTHStats,
+            "juggernaut": DeadlockedJuggernautStats,
+            "weapon": DeadlockedWeaponStats,
+            "vehicle": DeadlockedVehicleStats,
 
-        "horizon": DeadlockedHorizonStats,
-        "snd": DeadlockedSNDStats,
-        "payload": DeadlockedPayloadStats,
-        "spleef": DeadlockedSpleefStats,
-        "infected": DeadlockedInfectedStats,
-        "gungame": DeadlockedGungameStats,
-        "infinite_climber": DeadlockedInfiniteClimberStats,
-        "survival": DeadlockedSurvivalStats,
-        "survival_orxon": DeadlockedSurvivalOrxonStats,
-        "survival_mountain_pass": DeadlockedSurvivalMountainPassStats,
-        "survival_veldin": DeadlockedSurvivalVeldinStats,
-        "training": DeadlockedTrainingStats,
+            "horizon": DeadlockedHorizonStats,
+            "snd": DeadlockedSNDStats,
+            "payload": DeadlockedPayloadStats,
+            "spleef": DeadlockedSpleefStats,
+            "infected": DeadlockedInfectedStats,
+            "gungame": DeadlockedGungameStats,
+            "infinite_climber": DeadlockedInfiniteClimberStats,
+            "survival": DeadlockedSurvivalStats,
+            "survival_orxon": DeadlockedSurvivalOrxonStats,
+            "survival_mountain_pass": DeadlockedSurvivalMountainPassStats,
+            "survival_veldin": DeadlockedSurvivalVeldinStats,
+            "training": DeadlockedTrainingStats,
+        },
+        "uya": {
+            "overall": UyaOverallStats,
+            "deathmatch": UyaDeathmatchStats,
+            "siege": UyaSiegeStats,
+            "ctf": UyaCTFStats,
+            "weapon": UyaWeaponStats,
+        }
     }
-
+    
+    return stat_domain_dict[game]
 
 @functools.cache
 def get_available_stats_for_domain(domain: type[DeclarativeBase]) -> list[str]:
@@ -139,7 +167,7 @@ def get_available_stats_for_domain(domain: type[DeclarativeBase]) -> list[str]:
 
 
 @functools.cache
-def compute_stat_offerings() -> list[StatOffering]:
+def dl_compute_stat_offerings() -> list[StatOffering]:
     offerings: list[StatOffering] = list()
 
     for stat_map in vanilla_stats_map:
@@ -166,6 +194,26 @@ def compute_stat_offerings() -> list[StatOffering]:
             stat=stat["field"],
             label=stat["label"],
             custom=True
+        ))
+
+    return offerings
+
+
+@functools.cache
+def uya_compute_stat_offerings() -> list[StatOffering]:
+    offerings: list[StatOffering] = list()
+
+    for stat_map in uya_vanilla_stats_map:
+        stat = uya_vanilla_stats_map[stat_map]
+
+        if any(stat[_key] == "" for _key in stat):
+            continue
+
+        offerings.append(StatOffering(
+            domain=stat["table"].replace("_stats", ""),
+            stat=stat["field"],
+            label=stat["label"],
+            custom=False
         ))
 
     return offerings

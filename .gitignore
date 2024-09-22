@@ -166,3 +166,13 @@ cython_debug/
 *.dat
 
 env.json
+
+stats.json
+dl_stats.json
+uya_stats.json
+
+# Alembic
+alembic/versions/
+
+# Docker
+postgres_data
