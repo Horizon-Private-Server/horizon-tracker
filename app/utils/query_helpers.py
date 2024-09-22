@@ -118,8 +118,8 @@ def query_count(query: Query) -> int:
 
 @functools.cache
 def get_stat_domains(game: str) -> dict[str, type[DeclarativeBase]]:
-    if game == 'dl':
-        return {
+    stat_domain_dict: dict = {
+        "dl": {
             "overall": DeadlockedOverallStats,
             "deathmatch": DeadlockedDeathmatchStats,
             "conquest": DeadlockedConquestStats,
@@ -141,15 +141,17 @@ def get_stat_domains(game: str) -> dict[str, type[DeclarativeBase]]:
             "survival_mountain_pass": DeadlockedSurvivalMountainPassStats,
             "survival_veldin": DeadlockedSurvivalVeldinStats,
             "training": DeadlockedTrainingStats,
-        }
-    elif game == 'uya':
-        return {
+        },
+        "uya": {
             "overall": UyaOverallStats,
             "deathmatch": UyaDeathmatchStats,
             "siege": UyaSiegeStats,
             "ctf": UyaCTFStats,
             "weapon": UyaWeaponStats,
         }
+    }
+    
+    return stat_domain_dict[game]
 
 @functools.cache
 def get_available_stats_for_domain(domain: type[DeclarativeBase]) -> list[str]:
@@ -165,16 +167,11 @@ def get_available_stats_for_domain(domain: type[DeclarativeBase]) -> list[str]:
 
 
 @functools.cache
-def compute_stat_offerings(game: str) -> list[StatOffering]:
-    if game == 'dl':
-        stats_map = vanilla_stats_map
-    elif game == 'uya':
-        stats_map = uya_vanilla_stats_map
-
+def dl_compute_stat_offerings() -> list[StatOffering]:
     offerings: list[StatOffering] = list()
 
-    for stat_map in stats_map:
-        stat = stats_map[stat_map]
+    for stat_map in vanilla_stats_map:
+        stat = vanilla_stats_map[stat_map]
 
         if any(stat[_key] == "" for _key in stat):
             continue
@@ -197,6 +194,26 @@ def compute_stat_offerings(game: str) -> list[StatOffering]:
             stat=stat["field"],
             label=stat["label"],
             custom=True
+        ))
+
+    return offerings
+
+
+@functools.cache
+def uya_compute_stat_offerings() -> list[StatOffering]:
+    offerings: list[StatOffering] = list()
+
+    for stat_map in uya_vanilla_stats_map:
+        stat = uya_vanilla_stats_map[stat_map]
+
+        if any(stat[_key] == "" for _key in stat):
+            continue
+
+        offerings.append(StatOffering(
+            domain=stat["table"].replace("_stats", ""),
+            stat=stat["field"],
+            label=stat["label"],
+            custom=False
         ))
 
     return offerings

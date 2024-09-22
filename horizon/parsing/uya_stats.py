@@ -1,11 +1,6 @@
 import math
-from typing import TypedDict
 
-
-class StatDetails(TypedDict):
-    label: str
-    field: str
-    table: str
+from horizon.parsing.types import StatDetails
 
 
 uya_vanilla_stats_map: dict[int, StatDetails] = {

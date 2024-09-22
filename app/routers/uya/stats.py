@@ -17,7 +17,7 @@ from app.schemas.schemas import (
     UyaCTFStatsSchema,
     UyaPlayerDetailsSchema
 )
-from app.utils.query_helpers import get_stat_domains, get_available_stats_for_domain, compute_stat_offerings
+from app.utils.query_helpers import get_stat_domains, get_available_stats_for_domain, uya_compute_stat_offerings
 
 router = APIRouter(prefix="/api/uya/stats", tags=["uya-stats"])
 
@@ -37,7 +37,7 @@ def uya_stat_offerings() -> Pagination[StatOffering]:
     Provides a list of all stat offerings tracked by Horizon. These offerings include the appropriate domain, stat and
     label for requesting leaderboard data.
     """
-    offerings = compute_stat_offerings('uya')
+    offerings = uya_compute_stat_offerings()
     return Pagination[StatOffering](count=len(offerings), results=offerings)
 
 
@@ -48,7 +48,7 @@ def uya_leaderboard(domain: str, stat: str, page: int = 1, session: Session = De
     collection of stats (e.g., conquest, ctf, weapon, vehicle, etc.) and `stat` is a field that belongs to the parent
     stat domain. All domains and all stats are formatted in snake case.
     """
-    stat_domains: dict[str, type[DeclarativeBase]] = get_stat_domains('uya')
+    stat_domains: dict[str, type[DeclarativeBase]] = get_stat_domains("uya")
 
     if domain not in stat_domains:
         raise HTTPException(status_code=400, detail=f"Invalid stat domain '{domain}'.")
@@ -97,7 +97,7 @@ def uya_player(horizon_id: int, session: Session = Depends(get_db)) -> UyaPlayer
 
     query: Query = session.query(UyaPlayer).filter_by(horizon_id=horizon_id)
 
-    stat_domains: dict[str, type[DeclarativeBase]] = get_stat_domains('uya')
+    stat_domains: dict[str, type[DeclarativeBase]] = get_stat_domains("uya")
     for domain in stat_domains:
         stat_domain: type[DeclarativeBase] = stat_domains[domain]
         query = query.join(stat_domain)

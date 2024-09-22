@@ -2,7 +2,7 @@
 This script dataloads the Postgres database from a JSON output.
 """
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from tqdm import tqdm
 
@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
 
     ### DL
-    start_time = datetime.now()
+    start_time: datetime = datetime.now()
     with open("dl_stats.json") as stream:
         all_stats: dict[str, dict] = json.load(stream)
 
@@ -54,6 +54,6 @@ if __name__ == "__main__":
             player_name=account_full["AccountName"],
             wide_custom_stats=account_full["AccountCustomWideStats"]
         )
-    time_taken = datetime.now() - start_time
+    time_taken: timedelta = datetime.now() - start_time
     minutes, seconds = divmod(time_taken.total_seconds(), 60)
     print(f"Time taken: {int(minutes)} minutes and {seconds:.2f} seconds")
