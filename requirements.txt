@@ -9,3 +9,4 @@ botocore
 psycopg2
 requests
 urllib3
+aiohttp
