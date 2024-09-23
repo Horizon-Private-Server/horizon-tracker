@@ -14,6 +14,10 @@ from app.routers.dl.online import router as deadlocked_online_router
 from app.routers.uya.online import online_tracker as uya_online_tracker
 from app.routers.uya.online import router as uya_online_router
 
+from horizon.middleware_manager import uya_online_tracker
+from horizon.middleware_manager import dl_online_tracker
+
+
 ALLOWED_ORIGINS: list[str] = [
     "https://www.rac-horizon.com",
     "https://rac-horizon.com",
@@ -37,9 +41,9 @@ app.add_middleware(
 @app.on_event("startup")
 async def start_background_tasks():
     asyncio.create_task(uya_online_tracker.refresh_token())
-    asyncio.create_task(uya_online_tracker.poll_forever())
-    asyncio.create_task(deadlocked_online_tracker.refresh_token())
-    asyncio.create_task(deadlocked_online_tracker.poll_forever())
+    asyncio.create_task(uya_online_tracker.poll_players_online())
+    asyncio.create_task(dl_online_tracker.refresh_token())
+    asyncio.create_task(dl_online_tracker.poll_players_online())
 
 
 # Add sub-APIs.

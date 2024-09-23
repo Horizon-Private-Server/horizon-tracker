@@ -66,25 +66,29 @@ async def authenticate_async(protocol: str, host: str, username: str, password: 
             return auth_response_json["Token"]
 
 
-def get_all_accounts(protocol: str, host: str, app_id: str | int, token: str) -> list[dict[str, any]]:
+async def get_all_accounts(protocol: str, host: str, app_id: str | int, token: str) -> list[dict[str, any]]:
     """
-    Makes a request to the Horizon Middleware leaderboard API which functionally
-    make a medium-weight list of all users with basic stats.
+    Makes an asynchronous request to the Horizon Middleware leaderboard API which functionally
+    makes a medium-weight list of all users with basic stats.
 
     :param protocol: "HTTP" or "HTTPS".
     :param host: Host name and optional port of the target Horizon Middleware server
         (i.e., "stats.rac-horizon.com" or "111.222.111.222:1234").
     :param app_id: The Horizon App ID to filter by.
     :param token: The requesting user's authentication token.
-    :return:
+    :return: A list of dictionaries representing accounts.
     """
     leaderboard_url: str = f"{protocol}://{host}/Stats/getLeaderboard?StatId={2}&StartIndex={0}&Size={100_000}&AppId={app_id}"
 
-    leaderboard_response = requests.get(leaderboard_url, headers={"Authorization": f"Bearer {token}"}, verify=False)
-    return json.loads(leaderboard_response.text)
+    async with aiohttp.ClientSession() as session:
+        async with session.get(leaderboard_url, headers={"Authorization": f"Bearer {token}"}, ssl=False) as response:
+            if response.status == 200:  # Check if response status code is 200 (OK)
+                return await response.json()  # Parse the response as JSON if status is OK
+            logger.warning(f"get_all_accounts got {response.status} from {protocol}://{host}")
+            return []
 
 
-def get_account_basic_stats(protocol: str, host: str, account_id: str | int, app_id: str | int, token: str) -> Optional[dict[str, any]]:
+async def get_account_basic_stats(protocol: str, host: str, account_id: str | int, app_id: str | int, token: str) -> Optional[dict[str, any]]:
     """
     Makes a request to the Horizon Middleware account API which returns
     all basic stats for a user (including vanilla and custom stats).
@@ -98,13 +102,13 @@ def get_account_basic_stats(protocol: str, host: str, account_id: str | int, app
     :return:
     """
     account_url = f"{protocol}://{host}/Account/getAccountBasic?AccountId={account_id}&AppId={app_id}"
-    account_response = requests.get(account_url, headers={"Authorization": f"Bearer {token}"}, verify=False)
 
-    if account_response.status_code != 200:
-        return None
-
-    return json.loads(account_response.text)
-
+    async with aiohttp.ClientSession() as session:
+        async with session.get(account_url, headers={"Authorization": f"Bearer {token}"}, ssl=False) as response:
+            if response.status == 200:
+                return await response.json()  # Parse the response as JSON if status is OK
+            logger.warning(f"get_account_basic_stats got {response.status} from {protocol}://{host}")
+            return []
 
 async def get_players_online(protocol: str, host: str, token: str) -> Optional[dict[str, any]]:
     """
