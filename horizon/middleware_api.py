@@ -178,7 +178,7 @@ async def get_recent_stats(protocol: str, host: str, token: str, minutes: int=5)
 async def get_recent_game_history(protocol: str, host: str, token: str, app_id: int, minutes: int=5) -> Optional[dict[str, any]]:
     """
     Makes a request to the Horizon Middleware account API which returns
-    a list of [{account_id: {stat_id: stat_value}}]
+    a list of raw game values.
 
     :param protocol: "HTTP" or "HTTPS".
     :param host: Host name and optional port of the target Horizon Middleware server
@@ -247,8 +247,7 @@ def get_account_basic_stats(protocol: str, host: str, account_id: str | int, app
 
 def get_all_game_history(protocol: str, host: str, app_id: str | int, token: str, game_end:str = '2024-09-19T15:36:54') -> Optional[dict[str, any]]:
     """
-    Makes a request to the Horizon Middleware account API which returns
-    all basic stats for a user (including vanilla and custom stats).
+    Make a series of requests to get all game history.
 
     :param protocol: "HTTP" or "HTTPS".
     :param host: Host name and optional port of the target Horizon Middleware server
