@@ -66,7 +66,7 @@ async def authenticate_async(protocol: str, host: str, username: str, password: 
             return auth_response_json["Token"]
 
 
-async def get_all_accounts(protocol: str, host: str, app_id: str | int, token: str) -> list[dict[str, any]]:
+async def get_all_accounts_async(protocol: str, host: str, app_id: str | int, token: str) -> list[dict[str, any]]:
     """
     Makes an asynchronous request to the Horizon Middleware leaderboard API which functionally
     makes a medium-weight list of all users with basic stats.
@@ -88,7 +88,7 @@ async def get_all_accounts(protocol: str, host: str, app_id: str | int, token: s
             return []
 
 
-async def get_account_basic_stats(protocol: str, host: str, account_id: str | int, app_id: str | int, token: str) -> Optional[dict[str, any]]:
+async def get_account_basic_stats_async(protocol: str, host: str, account_id: str | int, app_id: str | int, token: str) -> Optional[dict[str, any]]:
     """
     Makes a request to the Horizon Middleware account API which returns
     all basic stats for a user (including vanilla and custom stats).
