@@ -152,7 +152,7 @@ async def get_active_games(protocol: str, host: str, token: str) -> list[dict[st
             logger.warning(f"get_active_games got {response.status} from {protocol}://{host}")
             return []
 
-async def get_recent_stats(protocol: str, host: str, token: str, minutes: int=5) -> Optional[dict[str, any]]:
+async def get_recent_stats(protocol: str, host: str, token: str, minutes: int=5) -> list[dict[str, any]]:
     """
     Makes a request to the Horizon Middleware account API which returns
     a list of [{account_id: {stat_id: stat_value}}]
@@ -175,7 +175,7 @@ async def get_recent_stats(protocol: str, host: str, token: str, minutes: int=5)
             return []
 
 
-async def get_recent_game_history(protocol: str, host: str, token: str, app_id: int, minutes: int=5) -> Optional[dict[str, any]]:
+async def get_recent_game_history(protocol: str, host: str, token: str, app_id: int, minutes: int=5) -> list[dict[str, any]]:
     """
     Makes a request to the Horizon Middleware account API which returns
     a list of raw game values.
