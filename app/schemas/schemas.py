@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 
-
 class Pagination[T](BaseModel):
     count: int
     results: list[T]
@@ -269,3 +268,29 @@ class UyaPlayerDetailsSchema(BaseModel):
     deathmatch_stats: UyaDeathmatchStatsSchema
     siege_stats: UyaSiegeStatsSchema
     ctf_stats: UyaCTFStatsSchema
+
+
+class DeadlockedPlayerOnlineSchema(BaseModel):
+    username: str
+
+class UyaPlayerOnlineSchema(BaseModel):
+    username: str
+
+class DeadlockedGameOnlineSchema(BaseModel):
+    name: str
+    game_status: str
+    time_started: str
+    players: list[DeadlockedPlayerOnlineSchema]
+    last_updated: str
+
+class UyaGameOnlineSchema(BaseModel):
+    name: str
+    game_status: str
+    time_started: str
+    map: str
+    time_limit: str
+    game_mode: str
+    game_type: str
+    players: list[UyaPlayerOnlineSchema]
+    last_updated: str
+

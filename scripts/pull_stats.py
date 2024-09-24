@@ -11,7 +11,8 @@ from app.database import CREDENTIALS
 from horizon.middleware_api import (
     authenticate,
     get_all_accounts,
-    get_account_basic_stats
+    get_account_basic_stats,
+    get_all_game_history
 )
 
 # Prevent requests from spamming to the console.
@@ -33,6 +34,7 @@ if __name__ == "__main__":
             password=horizon_password
         )
 
+        # Process player stats
         all_players: list[dict[str, any]] = get_all_accounts(
             protocol=protocol,
             host=host,
@@ -57,3 +59,8 @@ if __name__ == "__main__":
 
         with open(f"{game}_stats.json", "w") as stream:
             json.dump(all_stats, stream)
+
+        # Process game history
+        game_history: list[dict] = get_all_game_history(protocol, host, horizon_app_id, token, str(datetime.now()))
+        with open(f"{game}_gamehistory.json", "w") as stream:
+            json.dump(game_history, stream)

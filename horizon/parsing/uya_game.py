@@ -1,0 +1,124 @@
+import struct
+
+MAP_BITMAP = {
+    "00001":"Bakisi Isles",
+    "00010":"Hoven Gorge",
+    "00011":"Outpost x12",
+    "00100":"Korgon Outpost",
+    "00101":"Metropolis",
+    "00110":"Blackwater City",
+    "00111":"Command Center",
+    "01001":"Aquatos Sewers",
+    "01000": "Blackwater Dox",
+    "01010":"Marcadia Palace",
+}
+
+TIME_BITMAP = {
+    "000":"No Time Limit",
+    "001":"5 Minutes",
+    "010":"10 Minutes",
+    "011":"15 Minutes",
+    "100":"20 Minutes",
+    "101":"25 Minutes",
+    "110":"30 Minutes",
+    "111":"35 Minutes",
+}
+
+MODE_BITMAP = { #3,4
+    "00":"Siege",
+    "01":"CTF",
+    "10":"Deathmatch"
+}
+
+SUBMODE_BITMAP = {
+    # "1":"no_teams", #13
+    # "1":"base_attrition" #20
+    "isTeams":13, #1 = yes, means u can swap teams only 0 in DM
+    "isAttrition":20, #1 = yes #consitutes also as chaos ctf
+}
+
+
+def try_parse_value(func, num):
+    # Function that ensures that if num is a negative integer, 
+    # the result falls within the corresponding positive range 
+    # of an unsigned 32-bit integer.
+    try:
+        return func(num)
+    except:
+        return func(num+2**32)
+
+
+def uya_map_parser(generic_field_3: int) -> str:
+    # Pass in Generic Field 3 (integer)
+    def internal_parser(raw_input) -> str:
+        """Accepts generic_field_3 INTEGER number (which is 4 a byte long hex string)"""
+        raw_int:int = int(raw_input) if type(raw_input) is not int else raw_input
+        raw_hex:str = struct.pack("<I", raw_int).hex()
+        first_byte_hex:str = raw_hex[0:2]
+        int_base_16:int = int(first_byte_hex,16)
+        bitmask:str = format(int_base_16, "#010b")[2:]
+        _game_map:str = bitmask[:5]
+        _game_map:str = MAP_BITMAP[_game_map]
+        return _game_map
+
+    try:
+        game_map = try_parse_value(internal_parser, generic_field_3)
+    except:
+        game_map = "Unknown map!" 
+
+    return game_map
+
+
+
+def uya_time_parser(generic_field_3: int) -> str:
+    # Pass in Generic Field 3 (integer)
+    def internal_parser(raw_input) -> str:
+        """Accepts generic_field_3 INTEGER number (which is 4 a byte long hex string)"""
+        raw_int:int = int(raw_input) if type(raw_input) is not int else raw_input
+        raw_hex:str = struct.pack("<I", raw_int).hex()
+        first_byte_hex:str = raw_hex[0:2]
+        int_base_16:int = int(first_byte_hex,16)
+        bitmask:str = format(int_base_16, "#010b")[2:]
+        game_time:str = bitmask[5:]
+        game_time:str = TIME_BITMAP[game_time]
+        return game_time
+
+    try:
+        game_timelimit = try_parse_value(internal_parser, generic_field_3)
+    except:
+        game_timelimit = "Unknown Time!" 
+
+    return game_timelimit
+
+
+
+def uya_gamemode_parser(generic_field_3: int) -> tuple[str, str]:
+    # Pass in Generic Field 3 (integer)
+
+    def internal_parser(raw_input) -> tuple[str]:
+        """Accepts generic_field_3 INTEGER number (which is 4 a byte long hex string)
+        returns game MODE andd game SUBMODE/ type"""
+        raw_int:int = int(raw_input) if type(raw_input) is not int else raw_input
+        raw_hex:str = struct.pack("<I", raw_int).hex()
+        last_bytes:str = raw_hex[2:] #cut off the front 2 bytes
+        int_base_16:int = int(last_bytes,16)
+        bitmask:int = format(int_base_16, "#026b")[2:]
+        _game_mode:int = MODE_BITMAP[bitmask[3:5]] if bitmask[3:5] in MODE_BITMAP else "Unknown Game Mode"
+        is_teams:bool = True if bitmask[SUBMODE_BITMAP["isTeams"]] == "1" else False
+        is_attrition:bool = True if bitmask[SUBMODE_BITMAP["isAttrition"]]== "1" else False
+
+        if game_mode == MODE_BITMAP["00"]:
+            _game_type = "Attrition" if is_attrition else "Normal"
+        elif game_mode == MODE_BITMAP["01"]:
+            _game_type = "Chaos" if is_attrition else "Normal"
+        elif game_mode == MODE_BITMAP["10"]:
+            _game_type = "Teams" if is_teams else "FFA"
+        else:
+            _game_type = "Game Type Not Found"
+        return _game_mode, _game_type
+    try:
+        game_mode, game_type = try_parse_value(internal_parser, generic_field_3)
+    except:
+        game_mode, game_type = "Unkown Game Mode", "Unknown Game Type"
+
+    return game_mode, game_type

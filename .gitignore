@@ -170,9 +170,12 @@ env.json
 stats.json
 dl_stats.json
 uya_stats.json
+dl_gamehistory.json
+uya_gamehistory.json
 
 # Alembic
 alembic/versions/
 
 # Docker
 postgres_data
+
