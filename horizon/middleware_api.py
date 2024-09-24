@@ -276,7 +276,7 @@ def get_all_game_history(protocol: str, host: str, app_id: str | int, token: str
         if len(result) == 0:
             return results
         
-        results += result['Games']
+        results += result["Games"]
         counter += 1
 
-        game_end = result['NextCursor']
+        game_end = result["NextCursor"]

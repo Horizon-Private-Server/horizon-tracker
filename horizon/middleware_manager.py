@@ -143,7 +143,7 @@ class DeadlockedOnlineTracker():
 
         # Process each game
         for game in self._games_online:
-            game_players = list(filter(lambda x: x["GameId"] is not None and x["GameId"] == game["GameId"], self._players_online))
+            game_players = list(filter(lambda _player: _player["GameId"] is not None and _player["GameId"] == game["GameId"], self._players_online))
 
             games.append(DeadlockedGameOnlineSchema(
                 name=game["GameName"][0:15].strip(),
