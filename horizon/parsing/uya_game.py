@@ -39,7 +39,9 @@ SUBMODE_BITMAP = {
 
 
 def try_parse_value(func, num):
-    # Internal parsing tool for parsing
+    # Function that ensures that if num is a negative integer, 
+    # the result falls within the corresponding positive range 
+    # of an unsigned 32-bit integer.
     try:
         return func(num)
     except:

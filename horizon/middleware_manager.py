@@ -23,7 +23,7 @@ from app.schemas.schemas import (
 )
 
 
-class UyaOnlineTracker():
+class UyaOnlineTracker:
     def __init__(self, players_online_poll_interval:int=60, token_poll_interval:int=3600):
         """
         Class to manager all middleware calls and polling.
@@ -109,7 +109,7 @@ class UyaOnlineTracker():
 
 
 
-class DeadlockedOnlineTracker():
+class DeadlockedOnlineTracker:
     def __init__(self, players_online_poll_interval:int=60, token_poll_interval:int=3600):
         """
         Class to manager all middleware calls and polling.
