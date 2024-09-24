@@ -4,11 +4,18 @@ import json
 from datetime import datetime
 
 from app.database import CREDENTIALS
-from horizon.middleware_api import get_players_online, authenticate_async, authenticate, get_active_games
-from horizon.parsing.uya_game import uya_map_parser, uya_time_parser, uya_gamemode_parser
-
+from horizon.middleware_api import (
+    get_players_online, 
+    authenticate_async, 
+    authenticate, 
+    get_active_games
+)
+from horizon.parsing.uya_game import (
+    uya_map_parser, 
+    uya_time_parser, 
+    uya_gamemode_parser
+)
 from app.schemas.schemas import (
-    Pagination,
     UyaPlayerOnlineSchema,
     UyaGameOnlineSchema,
     DeadlockedPlayerOnlineSchema,

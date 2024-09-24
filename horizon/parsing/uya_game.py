@@ -48,16 +48,16 @@ def try_parse_value(func, num):
 
 def uya_map_parser(generic_field_3: int) -> str:
     # Pass in Generic Field 3 (integer)
-    def internal_parser(num):
+    def internal_parser(raw_input) -> str:
         """Accepts generic_field_3 INTEGER number (which is 4 a byte long hex string)"""
-        num = int(num) if type(num) != "int" else num
-        num = struct.pack("<I", num).hex()
-        num = num[0:2]
-        num = int(num,16)
-        num = format(num, "#010b")[2:]
-        game_map = num[:5]
-        game_map = MAP_BITMAP[game_map]
-        return game_map
+        raw_int:int = int(raw_input) if type(raw_input) is not int else raw_input
+        raw_hex:str = struct.pack("<I", raw_int).hex()
+        first_byte_hex:str = raw_hex[0:2]
+        int_base_16:int = int(first_byte_hex,16)
+        bitmask:str = format(int_base_16, "#010b")[2:]
+        _game_map:str = bitmask[:5]
+        _game_map:str = MAP_BITMAP[_game_map]
+        return _game_map
 
     try:
         game_map = try_parse_value(internal_parser, generic_field_3)
@@ -70,16 +70,15 @@ def uya_map_parser(generic_field_3: int) -> str:
 
 def uya_time_parser(generic_field_3: int) -> str:
     # Pass in Generic Field 3 (integer)
-    def internal_parser(num):
-
+    def internal_parser(raw_input) -> str:
         """Accepts generic_field_3 INTEGER number (which is 4 a byte long hex string)"""
-        num = int(num) if type(num) != "int" else num
-        num = struct.pack("<I", num).hex()
-        num = num[0:2]
-        num = int(num,16)
-        num = format(num, "#010b")[2:]
-        game_time = num[5:]
-        game_time = TIME_BITMAP[game_time]
+        raw_int:int = int(raw_input) if type(raw_input) is not int else raw_input
+        raw_hex:str = struct.pack("<I", raw_int).hex()
+        first_byte_hex:str = raw_hex[0:2]
+        int_base_16:int = int(first_byte_hex,16)
+        bitmask:str = format(int_base_16, "#010b")[2:]
+        game_time:str = bitmask[5:]
+        game_time:str = TIME_BITMAP[game_time]
         return game_time
 
     try:
@@ -94,27 +93,27 @@ def uya_time_parser(generic_field_3: int) -> str:
 def uya_gamemode_parser(generic_field_3: int) -> tuple[str, str]:
     # Pass in Generic Field 3 (integer)
 
-    def internal_parser(num):
+    def internal_parser(raw_input) -> tuple[str]:
         """Accepts generic_field_3 INTEGER number (which is 4 a byte long hex string)
         returns game MODE andd game SUBMODE/ type"""
-        num = int(num) if type(num) != "int" else num
-        num = struct.pack("<I", num).hex()
-        num = num[2:] #cut off the front 2 bytes
-        num = int(num,16)
-        num = format(num, "#026b")[2:]
-        game_mode = MODE_BITMAP[num[3:5]] if num[3:5] in MODE_BITMAP else "Unknown Game Mode"
-        is_teams = True if num[SUBMODE_BITMAP["isTeams"]] == "1" else False
-        is_attrition = True if num[SUBMODE_BITMAP["isAttrition"]]== "1" else False
+        raw_int:int = int(raw_input) if type(raw_input) is not int else raw_input
+        raw_hex:str = struct.pack("<I", raw_int).hex()
+        last_bytes:str = raw_hex[2:] #cut off the front 2 bytes
+        int_base_16:int = int(last_bytes,16)
+        bitmask:int = format(int_base_16, "#026b")[2:]
+        _game_mode:int = MODE_BITMAP[bitmask[3:5]] if bitmask[3:5] in MODE_BITMAP else "Unknown Game Mode"
+        is_teams:bool = True if bitmask[SUBMODE_BITMAP["isTeams"]] == "1" else False
+        is_attrition:bool = True if bitmask[SUBMODE_BITMAP["isAttrition"]]== "1" else False
 
         if game_mode == MODE_BITMAP["00"]:
-            game_type = "Attrition" if is_attrition else "Normal"
+            _game_type = "Attrition" if is_attrition else "Normal"
         elif game_mode == MODE_BITMAP["01"]:
-            game_type = "Chaos" if is_attrition else "Normal"
+            _game_type = "Chaos" if is_attrition else "Normal"
         elif game_mode == MODE_BITMAP["10"]:
-            game_type = "Teams" if is_teams else "FFA"
+            _game_type = "Teams" if is_teams else "FFA"
         else:
-            game_type = "Game Type Not Found"
-        return game_mode, game_type
+            _game_type = "Game Type Not Found"
+        return _game_mode, _game_type
     try:
         game_mode, game_type = try_parse_value(internal_parser, generic_field_3)
     except:
