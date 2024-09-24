@@ -37,9 +37,9 @@ app.add_middleware(
 @app.on_event("startup")
 async def start_background_tasks():
     asyncio.create_task(uya_online_tracker.refresh_token())
-    asyncio.create_task(uya_online_tracker.poll_players_online())
+    asyncio.create_task(uya_online_tracker.poll_active_online())
     asyncio.create_task(dl_online_tracker.refresh_token())
-    asyncio.create_task(dl_online_tracker.poll_players_online())
+    asyncio.create_task(dl_online_tracker.poll_active_online())
 
 
 # Add sub-APIs.
