@@ -6,7 +6,14 @@ import logging
 
 import requests
 
-logger = logging.getLogger("uvicorn")  # Get the uvicorn logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
+
 
 def authenticate(protocol: str, host: str, username: str, password: str) -> str:
     """
@@ -88,7 +95,7 @@ async def get_all_accounts_async(protocol: str, host: str, app_id: str | int, to
             return []
 
 
-async def get_account_basic_stats_async(protocol: str, host: str, account_id: str | int, app_id: str | int, token: str) -> Optional[dict[str, any]]:
+async def get_account_basic_stats_async(protocol: str, host: str, account_id: str | int, app_id: str | int, token: str) -> dict:
     """
     Makes a request to the Horizon Middleware account API which returns
     all basic stats for a user (including vanilla and custom stats).
@@ -108,7 +115,7 @@ async def get_account_basic_stats_async(protocol: str, host: str, account_id: st
             if response.status == 200:
                 return await response.json()  # Parse the response as JSON if status is OK
             logger.warning(f"get_account_basic_stats got {response.status} from {protocol}://{host}")
-            return []
+            return {}
 
 async def get_players_online(protocol: str, host: str, token: str) -> list[dict[str, any]]:
     """
