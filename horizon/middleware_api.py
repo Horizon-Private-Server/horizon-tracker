@@ -110,7 +110,7 @@ async def get_account_basic_stats_async(protocol: str, host: str, account_id: st
             logger.warning(f"get_account_basic_stats got {response.status} from {protocol}://{host}")
             return []
 
-async def get_players_online(protocol: str, host: str, token: str) -> Optional[dict[str, any]]:
+async def get_players_online(protocol: str, host: str, token: str) -> list[dict[str, any]]:
     """
     Makes a request to the Horizon Middleware account API which returns
     all players online.
@@ -131,7 +131,7 @@ async def get_players_online(protocol: str, host: str, token: str) -> Optional[d
             logger.warning(f"get_players_online got {response.status} from {protocol}://{host}")
             return []
 
-async def get_active_games(protocol: str, host: str, token: str) -> Optional[dict[str, any]]:
+async def get_active_games(protocol: str, host: str, token: str) -> list[dict[str, any]]:
     """
     Makes a request to the Horizon Middleware account API which returns
     the active games.
