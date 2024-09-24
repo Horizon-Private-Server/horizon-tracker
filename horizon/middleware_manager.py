@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 
 from app.database import CREDENTIALS
-from horizon.middleware_api import get_players_online, authenticate_async, authenticate, get_active_games, get_recent_stats, get_recent_game_history
+from horizon.middleware_api import get_players_online, authenticate_async, authenticate, get_active_games
 from horizon.parsing.uya_game import uya_map_parser, uya_time_parser, uya_gamemode_parser
 
 from app.schemas.schemas import (
