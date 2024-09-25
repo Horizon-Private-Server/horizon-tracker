@@ -6,6 +6,8 @@ from sqlalchemy.future import select
 from sqlalchemy import literal_column, func, inspect
 from sqlalchemy.orm import Session, Query, DeclarativeBase, selectinload
 
+from app.utils.database import retry_async
+
 from app.models.dl import (
     DeadlockedPlayer,
     DeadlockedOverallStats,
@@ -83,7 +85,7 @@ def update_player_vanilla_stats(
         session.add(player)
         session.commit()
 
-
+@retry_async(retries=3, delay=2)
 async def update_player_vanilla_stats_async(
     game: str,
     session: Session,

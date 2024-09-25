@@ -105,43 +105,55 @@ class UyaOnlineTracker:
     async def refresh_token(self) -> None:
         # Periodically refresh token so we don't get 401
         while True:
-            self._token = await authenticate_async(
-                protocol=self._protocol,
-                host=self._host,
-                username=self._horizon_username,
-                password=self._horizon_password
-            )
+            # Try except so that if the db goes down, it will work when the db comes back online
+            try:
+                self._token = await authenticate_async(
+                    protocol=self._protocol,
+                    host=self._host,
+                    username=self._horizon_username,
+                    password=self._horizon_password
+                )
+            except Exception as e:
+                logger.error("refresh_token failed to update!", exc_info=True)
+
             await asyncio.sleep(self._token_poll_interval)
 
     async def poll_active_online(self) -> None:
         # Poll forever and update internal variable
         while True:
-            self._players_online: list[dict] = await get_players_online(self._protocol, self._host, self._token)
-            self._games_online: list[dict] = await get_active_games(self._protocol, self._host, self._token)
+            # Try except so that if the db goes down, it will work when the db comes back online
+            try:
+                self._players_online: list[dict] = await get_players_online(self._protocol, self._host, self._token)
+                self._games_online: list[dict] = await get_active_games(self._protocol, self._host, self._token)
+            except Exception as e:
+                logger.error("poll_active_online failed to update!", exc_info=True)
 
             await asyncio.sleep(self._players_online_poll_interval)
 
     async def update_recent_stat_changes(self) -> None:
         while True:
-            # API will return all accounts and their stats when they had a stat change in the past 5 minutes (max 60 minutes ago)
-            recent_stats: list[dict] = await get_recent_stats(self._protocol, self._host, self._token)
-            logger.debug(f"update_live_stats: RECENT STATS: {recent_stats}")
+            # Try except so that if the db goes down, it will work when the db comes back online
+            try:
+                # API will return all accounts and their stats when they had a stat change in the past 5 minutes (max 60 minutes ago)
+                recent_stats: list[dict] = await get_recent_stats(self._protocol, self._host, self._token)
+                logger.debug(f"update_live_stats: RECENT STATS: {recent_stats}")
 
-            if len(recent_stats) > 0:
-                async with SessionLocalAsync() as session:
-                    for recent_stat_change in recent_stats:
-                        # For each stat change that we have, update the database.
-                        horizon_account_id:int = recent_stat_change["AccountId"]
+                if len(recent_stats) > 0:
+                    async with SessionLocalAsync() as session:
+                        for recent_stat_change in recent_stats:
+                            # For each stat change that we have, update the database.
+                            horizon_account_id:int = recent_stat_change["AccountId"]
 
-                        # Convert stats dict of StatIdx:StatValue to a list
-                        stats = [0] * 100
-                        for stat_idx, stat_value in recent_stat_change["Stats"].items():
-                            stats[int(stat_idx)-1] = stat_value
+                            # Convert stats dict of StatIdx:StatValue to a list
+                            stats = [0] * 100
+                            for stat_idx, stat_value in recent_stat_change["Stats"].items():
+                                stats[int(stat_idx)-1] = stat_value
 
-                        # Doesn't block the entire backend while updating DB with this players new stats
-                        logger.debug(f"update_live_stats: updating {horizon_account_id}, {stats}")
-                        await update_player_vanilla_stats_async("uya", session, horizon_account_id, stats, self._protocol, self._host, self._horizon_app_id, self._token)
-
+                            # Doesn't block the entire backend while updating DB with this players new stats
+                            logger.debug(f"update_live_stats: updating {horizon_account_id}, {stats}")
+                            await update_player_vanilla_stats_async("uya", session, horizon_account_id, stats, self._protocol, self._host, self._horizon_app_id, self._token)
+            except Exception as e:
+                logger.error("update_recent_stat_changes failed to update!", exc_info=True)
 
             await asyncio.sleep(self._recent_stats_poll_interval)
 
@@ -204,43 +216,52 @@ class DeadlockedOnlineTracker:
     async def refresh_token(self) -> None:
         # Periodically refresh token so we don't get 401
         while True:
-            self._token = await authenticate_async(
-                protocol=self._protocol,
-                host=self._host,
-                username=self._horizon_username,
-                password=self._horizon_password
-            )
+            try:
+                self._token = await authenticate_async(
+                    protocol=self._protocol,
+                    host=self._host,
+                    username=self._horizon_username,
+                    password=self._horizon_password
+                )
+            except Exception as e:
+                logger.error("refresh_token failed to update!", exc_info=True)
+
             await asyncio.sleep(self._token_poll_interval)
 
     async def poll_active_online(self) -> None:
         # Poll forever and update internal variable
         while True:
-            self._players_online: list[dict] = await get_players_online(self._protocol, self._host, self._token)
-            self._games_online: list[dict] = await get_active_games(self._protocol, self._host, self._token)
+            try:
+                self._players_online: list[dict] = await get_players_online(self._protocol, self._host, self._token)
+                self._games_online: list[dict] = await get_active_games(self._protocol, self._host, self._token)
+            except Exception as e:
+                logger.error("poll_active_online failed to update!", exc_info=True)
 
             await asyncio.sleep(self._players_online_poll_interval)
 
     async def update_recent_stat_changes(self) -> None:
         while True:
-            # API will return all accounts and their stats when they had a stat change in the past 5 minutes (max 60 minutes ago)
-            recent_stats: list[dict] = await get_recent_stats(self._protocol, self._host, self._token)
-            logger.debug(f"update_live_stats: RECENT STATS: {recent_stats}")
+            try:
+                # API will return all accounts and their stats when they had a stat change in the past 5 minutes (max 60 minutes ago)
+                recent_stats: list[dict] = await get_recent_stats(self._protocol, self._host, self._token)
+                logger.debug(f"update_live_stats: RECENT STATS: {recent_stats}")
 
-            if len(recent_stats) > 0:
-                async with SessionLocalAsync() as session:
-                    for recent_stat_change in recent_stats:
-                        # For each stat change that we have, update the database.
-                        horizon_account_id:int = recent_stat_change["AccountId"]
+                if len(recent_stats) > 0:
+                    async with SessionLocalAsync() as session:
+                        for recent_stat_change in recent_stats:
+                            # For each stat change that we have, update the database.
+                            horizon_account_id:int = recent_stat_change["AccountId"]
 
-                        # Convert stats dict of StatIdx:StatValue to a list
-                        stats = [0] * 100
-                        for stat_idx, stat_value in recent_stat_change["Stats"].items():
-                            stats[int(stat_idx)-1] = stat_value
+                            # Convert stats dict of StatIdx:StatValue to a list
+                            stats = [0] * 100
+                            for stat_idx, stat_value in recent_stat_change["Stats"].items():
+                                stats[int(stat_idx)-1] = stat_value
 
-                        # Doesn't block the entire backend while updating DB with this players new stats
-                        logger.debug(f"update_live_stats: updating {horizon_account_id}, {stats}")
-                        await update_player_vanilla_stats_async("dl", session, horizon_account_id, stats, self._protocol, self._host, self._horizon_app_id, self._token)
-
+                            # Doesn't block the entire backend while updating DB with this players new stats
+                            logger.debug(f"update_live_stats: updating {horizon_account_id}, {stats}")
+                            await update_player_vanilla_stats_async("dl", session, horizon_account_id, stats, self._protocol, self._host, self._horizon_app_id, self._token)
+            except Exception as e:
+                logger.error("update_recent_stat_changes failed to update!", exc_info=True)
 
             await asyncio.sleep(self._recent_stats_poll_interval)
 
