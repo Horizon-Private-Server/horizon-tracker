@@ -8,7 +8,7 @@ from app.database import Base
 # Game History
 ###############
 class UyaGameHistory(Base):
-    __tablename__ = "uya_overall_stats"
+    __tablename__ = "uya_game_history"
 
     id = Column(Integer, primary_key=True, index=True, unique=True)
 
