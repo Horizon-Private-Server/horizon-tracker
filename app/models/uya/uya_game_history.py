@@ -40,7 +40,7 @@ class UyaPlayerGameStats(Base):
     __tablename__ = "uya_player_game_stats"
 
     id = Column(Integer, primary_key=True, index=True, unique=True)
-    game_id = Column(Integer, ForeignKey('uya_overall_stats.id'), nullable=False)
+    game_id = Column(Integer, ForeignKey('uya_game_history.id'), nullable=False)
     player_horizon_id = Column(Integer, nullable=False)
 
     # Relationship back to the game
