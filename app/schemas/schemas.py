@@ -6,7 +6,7 @@ class Pagination[T](BaseModel):
 
 
 class LeaderboardEntry(BaseModel):
-    horizon_id: int
+    id: int
     username: str
     rank: int
     score: int
@@ -185,7 +185,7 @@ class DeadlockedTrainingStatsSchema(BaseModel):
 
 class DeadlockedPlayerDetailsSchema(BaseModel):
 
-    horizon_id: int
+    id: int
     username: str
 
     overall_stats: DeadlockedOverallStatsSchema
@@ -261,7 +261,7 @@ class UyaCTFStatsSchema(UyaStatsBase):
 
 class UyaPlayerDetailsSchema(BaseModel):
 
-    horizon_id: int
+    id: int
     username: str
 
     overall_stats: UyaOverallStatsSchema

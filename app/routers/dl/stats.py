@@ -79,7 +79,7 @@ def deadlocked_leaderboard(domain: str, stat: str, page: int = 1, session: Sessi
     query: Query = session.query(DeadlockedPlayer) \
         .join(stat_domain) \
         .add_columns(column(stat)) \
-        .order_by(getattr(stat_domain, stat).desc(), DeadlockedPlayer.horizon_id.asc())
+        .order_by(getattr(stat_domain, stat).desc(), DeadlockedPlayer.id.asc())
 
     results: list[tuple[DeadlockedPlayer, int]] = list(query.offset(100 * page).limit(100))
 
@@ -89,7 +89,7 @@ def deadlocked_leaderboard(domain: str, stat: str, page: int = 1, session: Sessi
         count=count,
         results=[
             LeaderboardEntry(
-                horizon_id=result.horizon_id,
+                id=result.id,
                 username=result.username,
                 score=score,
                 rank=(100 * page) + index + 1
@@ -99,15 +99,15 @@ def deadlocked_leaderboard(domain: str, stat: str, page: int = 1, session: Sessi
         ]
     )
 
-@router.get("/player/{horizon_id}")
-def deadlocked_player(horizon_id: int, session: Session = Depends(get_db)) -> DeadlockedPlayerDetailsSchema:
+@router.get("/player/{id}")
+def deadlocked_player(id: int, session: Session = Depends(get_db)) -> DeadlockedPlayerDetailsSchema:
     """
     Generate a paginated leaderboard (100 entries per page) for all Deadlocked stats. `domain` is a game mode or
     collection of stats (e.g., conquest, ctf, weapon, vehicle, etc.) and `stat` is a field that belongs to the parent
     stat domain. All domains and all stats are formatted in snake case.
     """
 
-    query: Query = session.query(DeadlockedPlayer).filter_by(horizon_id=horizon_id)
+    query: Query = session.query(DeadlockedPlayer).filter_by(id=id)
 
     stat_domains: dict[str, type[DeclarativeBase]] = get_stat_domains("dl")
     for domain in stat_domains:
@@ -118,7 +118,7 @@ def deadlocked_player(horizon_id: int, session: Session = Depends(get_db)) -> De
     result: DeadlockedPlayer = query.first()
 
     if result is None:
-        raise HTTPException(status_code=404, detail=f"Player with ID '{horizon_id}' not found.")
+        raise HTTPException(status_code=404, detail=f"Player with ID '{id}' not found.")
 
     stat_schema_dictionary: dict[str, type[BaseModel]] = {
         "overall_stats": DeadlockedOverallStatsSchema,
@@ -146,7 +146,7 @@ def deadlocked_player(horizon_id: int, session: Session = Depends(get_db)) -> De
 
     # TODO This is a very convoluted one-liner, add better documentation.
     return DeadlockedPlayerDetailsSchema(
-        horizon_id=result.horizon_id,
+        id=result.id,
         username=result.username,
         **{
             stat_schema_key: stat_schema_dictionary[stat_schema_key](

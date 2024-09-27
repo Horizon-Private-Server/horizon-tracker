@@ -10,9 +10,7 @@ from app.database import Base
 class DeadlockedOverallStats(Base):
     __tablename__ = "deadlocked_overall_stats"
 
-    id = Column(Integer, primary_key=True, index=True, unique=True)
-
-    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"))
+    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"), primary_key=True, index=True, unique=True)
     player = relationship("DeadlockedPlayer", uselist=False, back_populates="overall_stats")
 
     rank = Column(Integer, default=0, nullable=False)
@@ -28,9 +26,7 @@ class DeadlockedOverallStats(Base):
 class DeadlockedDeathmatchStats(Base):
     __tablename__ = "deadlocked_deathmatch_stats"
 
-    id = Column(Integer, primary_key=True, index=True, unique=True)
-
-    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"))
+    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"), primary_key=True, index=True, unique=True)
     player = relationship("DeadlockedPlayer", uselist=False, back_populates="deathmatch_stats")
 
     rank = Column(Integer, default=0, nullable=False)
@@ -43,9 +39,7 @@ class DeadlockedDeathmatchStats(Base):
 class DeadlockedConquestStats(Base):
     __tablename__ = "deadlocked_conquest_stats"
 
-    id = Column(Integer, primary_key=True, index=True, unique=True)
-
-    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"))
+    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"), primary_key=True, index=True, unique=True)
     player = relationship("DeadlockedPlayer", uselist=False, back_populates="conquest_stats")
 
     rank = Column(Integer, default=0, nullable=False)
@@ -59,9 +53,7 @@ class DeadlockedConquestStats(Base):
 class DeadlockedCTFStats(Base):
     __tablename__ = "deadlocked_ctf_stats"
 
-    id = Column(Integer, primary_key=True, index=True, unique=True)
-
-    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"))
+    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"), primary_key=True, index=True, unique=True)
     player = relationship("DeadlockedPlayer", uselist=False, back_populates="ctf_stats")
 
     rank = Column(Integer, default=0, nullable=False)
@@ -75,9 +67,7 @@ class DeadlockedCTFStats(Base):
 class DeadlockedKOTHStats(Base):
     __tablename__ = "deadlocked_koth_stats"
 
-    id = Column(Integer, primary_key=True, index=True, unique=True)
-
-    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"))
+    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"), primary_key=True, index=True, unique=True)
     player = relationship("DeadlockedPlayer", uselist=False, back_populates="koth_stats")
 
     rank = Column(Integer, default=0, nullable=False)
@@ -91,9 +81,7 @@ class DeadlockedKOTHStats(Base):
 class DeadlockedJuggernautStats(Base):
     __tablename__ = "deadlocked_juggernaut_stats"
 
-    id = Column(Integer, primary_key=True, index=True, unique=True)
-
-    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"))
+    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"), primary_key=True, index=True, unique=True)
     player = relationship("DeadlockedPlayer", uselist=False, back_populates="juggernaut_stats")
 
     rank = Column(Integer, default=0, nullable=False)
@@ -107,9 +95,7 @@ class DeadlockedJuggernautStats(Base):
 class DeadlockedWeaponStats(Base):
     __tablename__ = "deadlocked_weapon_stats"
 
-    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"))
-    id = Column(Integer, primary_key=True, index=True, unique=True)
-
+    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"), primary_key=True, index=True, unique=True)
     player = relationship("DeadlockedPlayer", uselist=False, back_populates="weapon_stats")
 
     wrench_kills = Column(Integer, default=0, nullable=False)
@@ -135,9 +121,7 @@ class DeadlockedWeaponStats(Base):
 class DeadlockedVehicleStats(Base):
     __tablename__ = "deadlocked_vehicle_stats"
 
-    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"))
-    id = Column(Integer, primary_key=True, index=True, unique=True)
-
+    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"), primary_key=True, index=True, unique=True)
     player = relationship("DeadlockedPlayer", uselist=False, back_populates="vehicle_stats")
 
     roadkills = Column(Integer, default=0, nullable=False)
@@ -150,9 +134,7 @@ class DeadlockedVehicleStats(Base):
 class DeadlockedHorizonStats(Base):
     __tablename__ = "deadlocked_horizon_stats"
 
-    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"))
-    id = Column(Integer, primary_key=True, index=True, unique=True)
-
+    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"), primary_key=True, index=True, unique=True)
     player = relationship("DeadlockedPlayer", uselist=False, back_populates="horizon_stats")
 
     total_bolts = Column(Integer, default=0, nullable=False)
@@ -162,9 +144,7 @@ class DeadlockedHorizonStats(Base):
 class DeadlockedSNDStats(Base):
     __tablename__ = "deadlocked_snd_stats"
 
-    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"))
-    id = Column(Integer, primary_key=True, index=True, unique=True)
-
+    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"), primary_key=True, index=True, unique=True)
     player = relationship("DeadlockedPlayer", uselist=False, back_populates="snd_stats")
 
     rank = Column(Integer, default=0, nullable=False)
@@ -184,9 +164,7 @@ class DeadlockedSNDStats(Base):
 class DeadlockedPayloadStats(Base):
     __tablename__ = "deadlocked_payload_stats"
 
-    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"))
-    id = Column(Integer, primary_key=True, index=True, unique=True)
-
+    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"), primary_key=True, index=True, unique=True)
     player = relationship("DeadlockedPlayer", uselist=False, back_populates="payload_stats")
 
     rank = Column(Integer, default=0, nullable=False)
@@ -204,9 +182,7 @@ class DeadlockedPayloadStats(Base):
 class DeadlockedSpleefStats(Base):
     __tablename__ = "deadlocked_spleef_stats"
 
-    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"))
-    id = Column(Integer, primary_key=True, index=True, unique=True)
-
+    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"), primary_key=True, index=True, unique=True)
     player = relationship("DeadlockedPlayer", uselist=False, back_populates="spleef_stats")
 
     rank = Column(Integer, default=0, nullable=False)
@@ -222,9 +198,7 @@ class DeadlockedSpleefStats(Base):
 class DeadlockedInfectedStats(Base):
     __tablename__ = "deadlocked_infected_stats"
 
-    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"))
-    id = Column(Integer, primary_key=True, index=True, unique=True)
-
+    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"), primary_key=True, index=True, unique=True)
     player = relationship("DeadlockedPlayer", uselist=False, back_populates="infected_stats")
 
     rank = Column(Integer, default=0, nullable=False)
@@ -243,9 +217,7 @@ class DeadlockedInfectedStats(Base):
 class DeadlockedGungameStats(Base):
     __tablename__ = "deadlocked_gungame_stats"
 
-    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"))
-    id = Column(Integer, primary_key=True, index=True, unique=True)
-
+    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"), primary_key=True, index=True, unique=True)
     player = relationship("DeadlockedPlayer", uselist=False, back_populates="gungame_stats")
 
     rank = Column(Integer, default=0, nullable=False)
@@ -263,9 +235,7 @@ class DeadlockedGungameStats(Base):
 class DeadlockedInfiniteClimberStats(Base):
     __tablename__ = "deadlocked_infinite_climber_stats"
 
-    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"))
-    id = Column(Integer, primary_key=True, index=True, unique=True)
-
+    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"), primary_key=True, index=True, unique=True)
     player = relationship("DeadlockedPlayer", uselist=False, back_populates="infinite_climber_stats")
 
     rank = Column(Integer, default=0, nullable=False)
@@ -279,9 +249,7 @@ class DeadlockedInfiniteClimberStats(Base):
 class DeadlockedSurvivalStats(Base):
     __tablename__ = "deadlocked_survival_stats"
 
-    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"))
-    id = Column(Integer, primary_key=True, index=True, unique=True)
-
+    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"), primary_key=True, index=True, unique=True)
     player = relationship("DeadlockedPlayer", uselist=False, back_populates="survival_stats")
 
     rank = Column(Integer, default=0, nullable=False)
@@ -311,9 +279,7 @@ class DeadlockedSurvivalStats(Base):
 class DeadlockedSurvivalOrxonStats(Base):
     __tablename__ = "deadlocked_survival_orxon_stats"
 
-    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"))
-    id = Column(Integer, primary_key=True, index=True, unique=True)
-
+    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"), primary_key=True, index=True, unique=True)
     player = relationship("DeadlockedPlayer", uselist=False, back_populates="survival_orxon_stats")
 
     solo_high_score = Column(Integer, default=0, nullable=False)
@@ -325,9 +291,7 @@ class DeadlockedSurvivalOrxonStats(Base):
 class DeadlockedSurvivalMountainPassStats(Base):
     __tablename__ = "deadlocked_survival_mountain_pass_stats"
 
-    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"))
-    id = Column(Integer, primary_key=True, index=True, unique=True)
-
+    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"), primary_key=True, index=True, unique=True)
     player = relationship("DeadlockedPlayer", uselist=False, back_populates="survival_mountain_pass_stats")
 
     solo_high_score = Column(Integer, default=0, nullable=False)
@@ -339,9 +303,7 @@ class DeadlockedSurvivalMountainPassStats(Base):
 class DeadlockedSurvivalVeldinStats(Base):
     __tablename__ = "deadlocked_survival_veldin_stats"
 
-    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"))
-    id = Column(Integer, primary_key=True, index=True, unique=True)
-
+    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"), primary_key=True, index=True, unique=True)
     player = relationship("DeadlockedPlayer", uselist=False, back_populates="survival_veldin_stats")
 
     solo_high_score = Column(Integer, default=0, nullable=False)
@@ -353,9 +315,7 @@ class DeadlockedSurvivalVeldinStats(Base):
 class DeadlockedTrainingStats(Base):
     __tablename__ = "deadlocked_training_stats"
 
-    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"))
-    id = Column(Integer, primary_key=True, index=True, unique=True)
-
+    player_id = Column(Integer, ForeignKey("deadlocked_player.id", ondelete="CASCADE"), primary_key=True, index=True, unique=True)
     player = relationship("DeadlockedPlayer", uselist=False, back_populates="training_stats")
 
     rank = Column(Integer, default=0, nullable=False)
@@ -385,10 +345,11 @@ class DeadlockedPlayer(Base):
     __tablename__ = "deadlocked_player"
 
     id = Column(Integer, primary_key=True, index=True, unique=True)
-    horizon_id = Column(Integer, index=True, unique=True, nullable=False)
 
     # TODO This should have a unique constraint, but there are duplicates in the Horizon Prod data.
     # TODO Wait for a Prod stats cleanup.
+    # Note: There are duplicates in Deadlocked only because prod has both NTSC and PAL which each have their own set of usernames.
+    # You can have user "test123" in NTSC, and a different account "test123" in PAL.
     username = Column(String, nullable=False)
 
 

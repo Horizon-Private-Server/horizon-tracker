@@ -1,5 +1,6 @@
 import struct
 
+
 MAP_BITMAP = {
     "00001":"Bakisi Isles",
     "00010":"Hoven Gorge",
@@ -14,14 +15,14 @@ MAP_BITMAP = {
 }
 
 TIME_BITMAP = {
-    "000":"No Time Limit",
-    "001":"5 Minutes",
-    "010":"10 Minutes",
-    "011":"15 Minutes",
-    "100":"20 Minutes",
-    "101":"25 Minutes",
-    "110":"30 Minutes",
-    "111":"35 Minutes",
+    "000": 0,
+    "001": 5,
+    "010": 10,
+    "011": 15,
+    "100": 20,
+    "101": 25,
+    "110": 30,
+    "111": 35,
 }
 
 MODE_BITMAP = { #3,4
@@ -47,8 +48,13 @@ def try_parse_value(func, num):
     except:
         return func(num+2**32)
 
+def uya_game_name_parser(game_name: str) -> str:
+    return game_name[:15]
 
-def uya_map_parser(generic_field_3: int) -> str:
+def uya_map_parser(generic_field_3: int, metadata: dict) -> str:
+    if 'CustomMap' in metadata.keys() and metadata['CustomMap']:
+        return metadata['CustomMap']
+
     # Pass in Generic Field 3 (integer)
     def internal_parser(raw_input) -> str:
         """Accepts generic_field_3 INTEGER number (which is 4 a byte long hex string)"""
@@ -70,7 +76,7 @@ def uya_map_parser(generic_field_3: int) -> str:
 
 
 
-def uya_time_parser(generic_field_3: int) -> str:
+def uya_time_parser(generic_field_3: int) -> int:
     # Pass in Generic Field 3 (integer)
     def internal_parser(raw_input) -> str:
         """Accepts generic_field_3 INTEGER number (which is 4 a byte long hex string)"""

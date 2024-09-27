@@ -1,5 +1,7 @@
 import functools
 from typing import Optional
+from datetime import datetime
+import json
 
 from sqlalchemy import literal_column, func
 from sqlalchemy.orm import Session, Query, DeclarativeBase
@@ -25,12 +27,21 @@ from app.models.uya import (
     UyaWeaponStats,
     UyaSiegeStats,
     UyaDeathmatchStats,
-    UyaCTFStats
+    UyaCTFStats,
+    UyaGameHistory,
+    UyaPlayerGameStats,
 )
+
 
 from app.schemas.schemas import StatOffering
 from horizon.parsing.deadlocked_stats import vanilla_stats_map, custom_stats_map
 from horizon.parsing.uya_stats import uya_vanilla_stats_map
+from horizon.parsing.uya_game import (
+    uya_map_parser, 
+    uya_time_parser, 
+    uya_gamemode_parser,
+    uya_game_name_parser
+)
 
 
 def update_player_vanilla_stats(
@@ -41,23 +52,23 @@ def update_player_vanilla_stats(
     wide_stats: list[int]
 ) -> None:
     
-    if game == 'dl':
+    if game == "dl":
         player_class = DeadlockedPlayer
         stats_map = vanilla_stats_map
-    elif game == 'uya':
+    elif game == "uya":
         player_class = UyaPlayer
         stats_map = uya_vanilla_stats_map
 
     assert len(wide_stats) == 100, "The provided wide stats length is not 100, please validate your input."
 
-    player = session.query(player_class).filter_by(horizon_id=int(player_id)).first()
+    player = session.query(player_class).filter_by(id=int(player_id)).first()
 
     if player is None:
-        player = player_class(username=player_name, horizon_id=player_id)
+        player = player_class(username=player_name, id=player_id)
         session.add(player)
         session.commit()
 
-        # TODO This has a lot of code smell, but it's a simple way to ensure the existence of 1-1 tables.
+        # TODO This has a lot of code smell, but it"s a simple way to ensure the existence of 1-1 tables.
         update_player_vanilla_stats(game, session, player_id, player_name, wide_stats)
     else:
 
@@ -73,6 +84,137 @@ def update_player_vanilla_stats(
         session.commit()
 
 
+def update_uya_gamehistory(
+    game: dict,
+    session: Session
+) -> None:
+
+    if "Metadata" not in game.keys() or game["Metadata"] == None:
+        game["Metadata"] = {}
+    else:
+        game["Metadata"] = json.loads(game["Metadata"])
+
+    # Check if a record already exists
+    existing_game = session.query(UyaGameHistory).filter_by(id=int(game["Id"])).first()
+
+    if existing_game:
+        # Update the existing record
+        existing_game.status = game["WorldStatus"]
+        existing_game.game_map = uya_map_parser(game["GenericField3"], game["Metadata"])
+        existing_game.game_name = uya_game_name_parser(game["GameName"])
+        existing_game.game_mode = uya_gamemode_parser(game["GenericField3"])[0]
+        existing_game.game_submode = uya_gamemode_parser(game["GenericField3"])[1]
+        existing_game.time_limit = uya_time_parser(game["GenericField3"])
+        existing_game.game_create_time = datetime.fromisoformat(game["GameCreateDt"][:26])
+        existing_game.game_start_time = datetime.fromisoformat(game["GameStartDt"][:26])
+        existing_game.game_end_time = datetime.fromisoformat(game["GameEndDt"][:26])
+        existing_game.game_duration = (datetime.fromisoformat(game["GameEndDt"][:26]) - datetime.fromisoformat(game["GameStartDt"][:26])).total_seconds() / 60
+    else:
+        print(f"Adding new record: {int(game['Id'])}")
+        # Create a new record
+        new_game_model = UyaGameHistory(
+            id=int(game["Id"]),
+            status=game["WorldStatus"],
+            game_map=uya_map_parser(game["GenericField3"], game["Metadata"]),
+            game_name=uya_game_name_parser(game["GameName"]),
+            game_mode=uya_gamemode_parser(game["GenericField3"])[0],
+            game_submode=uya_gamemode_parser(game["GenericField3"])[1],
+            time_limit=uya_time_parser(game["GenericField3"]),
+            n60_enabled=False,
+            lava_gun_enabled=False,
+            gravity_bomb_enabled=False,
+            flux_rifle_enabled=False,
+            min_glove_enabled=False,
+            morph_enabled=False,
+            blitz_enabled=False,
+            rocket_enabled=False,
+            game_create_time=datetime.fromisoformat(game["GameCreateDt"][:26]),
+            game_start_time=datetime.fromisoformat(game["GameStartDt"][:26]),
+            game_end_time=datetime.fromisoformat(game["GameEndDt"][:26]),
+            game_duration=(datetime.fromisoformat(game["GameEndDt"][:26]) - datetime.fromisoformat(game["GameStartDt"][:26])).total_seconds() / 60
+        )
+        session.add(new_game_model)
+
+    session.flush()
+    session.commit()
+
+    # Clean PostWideStats - PreWideStats for each player
+    if "PreWideStats" in game["Metadata"].keys() and "Players" in game["Metadata"]["PreWideStats"].keys():
+        players_pre: list[str] = [horizon_account_id for horizon_account_id in game["Metadata"]["PreWideStats"]["Players"]]
+
+        # Subtract players post from players pre
+        for horizon_player_id in players_pre:
+            stat_difference:list = [post_stat - pre_stat for post_stat, pre_stat in zip(game["Metadata"]["PostWideStats"]["Players"][horizon_player_id], game["Metadata"]["PreWideStats"]["Players"][horizon_player_id])]
+
+            # Convert stat difference to string key
+            player_cleaned_stats:dict[str, int] = {uya_vanilla_stats_map[key]['label']: value for key, value in zip(uya_vanilla_stats_map.keys(), stat_difference) if uya_vanilla_stats_map[key]["label"]}
+
+            existing_player_game_stats = session.query(UyaPlayerGameStats).filter_by(game_id=int(game["Id"])).filter_by(player_id=int(horizon_player_id)).first()
+            if existing_player_game_stats:
+                    existing_player_game_stats.win = player_cleaned_stats["Wins"] == 1 # If there was +1 to win stat
+                    existing_player_game_stats.kills = player_cleaned_stats["Kills"]
+                    existing_player_game_stats.deaths = player_cleaned_stats["Deaths"]
+                    existing_player_game_stats.base_dmg = player_cleaned_stats["Total Base Damage"]
+                    existing_player_game_stats.flag_captures = player_cleaned_stats["CTF Flags Captured"]
+                    existing_player_game_stats.flag_saves = player_cleaned_stats["CTF Flags Saved"]
+                    existing_player_game_stats.suicides = player_cleaned_stats["Suicides"]
+                    existing_player_game_stats.nodes = player_cleaned_stats["Total Nodes"]
+                    existing_player_game_stats.n60_deaths = player_cleaned_stats["N60 Deaths"]
+                    existing_player_game_stats.n60_kills = player_cleaned_stats["N60 Kills"]
+                    existing_player_game_stats.lava_gun_deaths = player_cleaned_stats["Lava Gun Deaths"]
+                    existing_player_game_stats.lava_gun_kills = player_cleaned_stats["Lava Gun Kills"]
+                    existing_player_game_stats.gravity_bomb_deaths = player_cleaned_stats["Gravity Bomb Deaths"]
+                    existing_player_game_stats.gravity_bomb_kills = player_cleaned_stats["Gravity Bomb Kills"]
+                    existing_player_game_stats.flux_rifle_deaths = player_cleaned_stats["Flux Rifle Deaths"]
+                    existing_player_game_stats.flux_rifle_kills = player_cleaned_stats["Flux Rifle Kills"]
+                    existing_player_game_stats.mine_glove_deaths = player_cleaned_stats["Mine Glove Deaths"]
+                    existing_player_game_stats.min_glove_kills = player_cleaned_stats["Mine Glove Kills"]
+                    existing_player_game_stats.morph_deaths = player_cleaned_stats["Morph-O-Ray Deaths"]
+                    existing_player_game_stats.morph_kills = player_cleaned_stats["Morph-O-Ray Kills"]
+                    existing_player_game_stats.blitz_deaths = player_cleaned_stats["Blitz Cannon Deaths"]
+                    existing_player_game_stats.blitz_kills = player_cleaned_stats["Blitz Cannon Kills"]
+                    existing_player_game_stats.rocket_deaths = player_cleaned_stats["Rocket Deaths"]
+                    existing_player_game_stats.rocket_kills = player_cleaned_stats["Rocket Kills"]
+                    existing_player_game_stats.wrench_deaths = player_cleaned_stats["Wrench Deaths"]
+                    existing_player_game_stats.wrench_kills = player_cleaned_stats["Wrench Kills"]
+            else:
+                players_game_stats = UyaPlayerGameStats(
+                    game_id = int(game["Id"]),
+                    player_id = int(horizon_player_id),
+
+                    win = player_cleaned_stats["Wins"] == 1, # If there was +1 to win stat
+                    kills = player_cleaned_stats["Kills"],
+                    deaths = player_cleaned_stats["Deaths"],
+                    base_dmg = player_cleaned_stats["Total Base Damage"],
+                    flag_captures = player_cleaned_stats["CTF Flags Captured"],
+                    flag_saves = player_cleaned_stats["CTF Flags Saved"],
+                    suicides = player_cleaned_stats["Suicides"],
+                    nodes = player_cleaned_stats["Total Nodes"],
+                    n60_deaths = player_cleaned_stats["N60 Deaths"],
+                    n60_kills = player_cleaned_stats["N60 Kills"],
+                    lava_gun_deaths = player_cleaned_stats["Lava Gun Deaths"],
+                    lava_gun_kills = player_cleaned_stats["Lava Gun Kills"],
+                    gravity_bomb_deaths = player_cleaned_stats["Gravity Bomb Deaths"],
+                    gravity_bomb_kills = player_cleaned_stats["Gravity Bomb Kills"],
+                    flux_rifle_deaths = player_cleaned_stats["Flux Rifle Deaths"],
+                    flux_rifle_kills = player_cleaned_stats["Flux Rifle Kills"],
+                    mine_glove_deaths = player_cleaned_stats["Mine Glove Deaths"],
+                    min_glove_kills = player_cleaned_stats["Mine Glove Kills"],
+                    morph_deaths = player_cleaned_stats["Morph-O-Ray Deaths"],
+                    morph_kills = player_cleaned_stats["Morph-O-Ray Kills"],
+                    blitz_deaths = player_cleaned_stats["Blitz Cannon Deaths"],
+                    blitz_kills = player_cleaned_stats["Blitz Cannon Kills"],
+                    rocket_deaths = player_cleaned_stats["Rocket Deaths"],
+                    rocket_kills = player_cleaned_stats["Rocket Kills"],
+                    wrench_deaths = player_cleaned_stats["Wrench Deaths"],
+                    wrench_kills = player_cleaned_stats["Wrench Kills"],
+                )
+                session.add(players_game_stats)
+
+    # Commit the changes
+    session.commit()
+
+
 # TODO Determine if this should be part of a single function.
 # TODO There are trade-offs to keeping them separate and merging them.
 def update_deadlocked_player_custom_stats(
@@ -82,10 +224,10 @@ def update_deadlocked_player_custom_stats(
     wide_custom_stats: list[int]
 ) -> None:
 
-    player: Optional[DeadlockedPlayer] = session.query(DeadlockedPlayer).filter_by(horizon_id=int(player_id)).first()
+    player: Optional[DeadlockedPlayer] = session.query(DeadlockedPlayer).filter_by(id=int(player_id)).first()
 
     if player is None:
-        player = DeadlockedPlayer(username=player_name, horizon_id=player_id)
+        player = DeadlockedPlayer(username=player_name, id=player_id)
         session.add(player)
         session.commit()
 

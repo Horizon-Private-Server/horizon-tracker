@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime, Float
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime, Float, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -9,15 +9,13 @@ from app.database import Base
 ###############
 class UyaGameHistory(Base):
     __tablename__ = "uya_game_history"
+    id = Column(Integer, primary_key=True, index=True, unique=True, nullable=False)
 
-    id = Column(Integer, primary_key=True, index=True, unique=True)
-
-    horizon_id = Column(Integer, index=True, unique=True, nullable=False)
-
-    game_map = Column(String, default=0, nullable=False)
-    game_name = Column(String, default=0, nullable=False)
-    game_mode = Column(String, default=0, nullable=False)
-    game_submode = Column(String, default=0, nullable=False)
+    status = Column(String, default="UNKNOWN STATUS", nullable=False)
+    game_map = Column(String, default="UNKNOWN GAMEMAP", nullable=False)
+    game_name = Column(String, default="UNKNOWN GAMENAME", nullable=False)
+    game_mode = Column(String, default="UNKNOWN GAMEMODE", nullable=False)
+    game_submode = Column(String, default="UNKNOWN SUBMODE", nullable=False)
     time_limit = Column(Integer, default=0, nullable=False)
     n60_enabled = Column(Boolean, default=False, nullable=False)
     lava_gun_enabled = Column(Boolean, default=False, nullable=False)
@@ -38,22 +36,22 @@ class UyaGameHistory(Base):
 
 class UyaPlayerGameStats(Base):
     __tablename__ = "uya_player_game_stats"
+    __table_args__ = (
+        UniqueConstraint("game_id", "player_id", name="uix_game_id_player_id"),
+    )
 
     id = Column(Integer, primary_key=True, index=True, unique=True)
-    game_id = Column(Integer, ForeignKey('uya_game_history.id'), nullable=False)
-    player_horizon_id = Column(Integer, nullable=False)
+    game_id = Column(Integer, ForeignKey("uya_game_history.id"), nullable=False)
+    player_id = Column(Integer, nullable=False)
 
-    # Relationship back to the game
-    game = relationship("UyaGameHistory", back_populates="players")
-    wins = Column(Integer, default=0, nullable=False)
-    losses = Column(Integer, default=0, nullable=False)
+    win = Column(Boolean, default=False, nullable=False)
     kills = Column(Integer, default=0, nullable=False)
     deaths = Column(Integer, default=0, nullable=False)
-    suicides = Column(Integer, default=0, nullable=False)
     base_dmg = Column(Integer, default=0, nullable=False)
-    nodes = Column(Integer, default=0, nullable=False)
     flag_captures = Column(Integer, default=0, nullable=False)
     flag_saves = Column(Integer, default=0, nullable=False)
+    suicides = Column(Integer, default=0, nullable=False)
+    nodes = Column(Integer, default=0, nullable=False)
     n60_deaths = Column(Integer, default=0, nullable=False)
     n60_kills = Column(Integer, default=0, nullable=False)
     lava_gun_deaths = Column(Integer, default=0, nullable=False)
@@ -73,4 +71,5 @@ class UyaPlayerGameStats(Base):
     wrench_deaths = Column(Integer, default=0, nullable=False)
     wrench_kills = Column(Integer, default=0, nullable=False)
 
-
+    # Relationship back to the game
+    game = relationship("UyaGameHistory", back_populates="players")

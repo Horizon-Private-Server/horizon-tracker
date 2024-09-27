@@ -32,7 +32,7 @@ uya_vanilla_stats_map: dict[int, StatDetails] = {
     25: {'label': 'Gravity Bomb Kills', 'field': 'gravity_bomb_kills', 'table': 'weapon_stats'},
     26: {'label': 'Flux Rifle Deaths', 'field': 'flux_rifle_deaths', 'table': 'weapon_stats'},
     27: {'label': 'Flux Rifle Kills', 'field': 'flux_rifle_kills', 'table': 'weapon_stats'},
-    28: {'label': 'Mins Glove Deaths', 'field': 'mine_glove_deaths', 'table': 'weapon_stats'},
+    28: {'label': 'Mine Glove Deaths', 'field': 'mine_glove_deaths', 'table': 'weapon_stats'},
     29: {'label': 'Mine Glove Kills', 'field': 'min_glove_kills', 'table': 'weapon_stats'},
     30: {'label': 'Morph-O-Ray Deaths', 'field': 'morph_deaths', 'table': 'weapon_stats'},
     31: {'label': 'Morph-O-Ray Kills', 'field': 'morph_kills', 'table': 'weapon_stats'},
