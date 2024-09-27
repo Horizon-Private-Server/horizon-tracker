@@ -126,7 +126,7 @@ class UyaWeaponStats(Base):
     flux_rifle_deaths = Column(Integer, default=0, nullable=False)
     flux_rifle_kills = Column(Integer, default=0, nullable=False)
     mine_glove_deaths = Column(Integer, default=0, nullable=False)
-    min_glove_kills = Column(Integer, default=0, nullable=False)
+    mine_glove_kills = Column(Integer, default=0, nullable=False)
     morph_deaths = Column(Integer, default=0, nullable=False)
     morph_kills = Column(Integer, default=0, nullable=False)
     blitz_deaths = Column(Integer, default=0, nullable=False)

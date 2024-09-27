@@ -11,6 +11,9 @@ from app.routers.uya.stats import router as uya_stats_router
 from app.routers.dl.online import router as deadlocked_online_router
 from app.routers.uya.online import router as uya_online_router
 
+
+from app.routers.uya.game_history import router as uya_gamehistory_router
+
 from horizon.middleware_manager import uya_online_tracker
 from horizon.middleware_manager import dl_online_tracker
 
@@ -47,6 +50,8 @@ app.include_router(deadlocked_stats_router)
 app.include_router(uya_stats_router)
 app.include_router(deadlocked_online_router)
 app.include_router(uya_online_router)
+
+app.include_router(uya_gamehistory_router)
 
 
 # Dependency

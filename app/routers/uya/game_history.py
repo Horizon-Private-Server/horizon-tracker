@@ -58,7 +58,7 @@ def uya_game(page: int = 1, session: Session = Depends(get_db)) -> Pagination[Uy
                 lava_gun_enabled=result.lava_gun_enabled,
                 gravity_bomb_enabled=result.gravity_bomb_enabled,
                 flux_rifle_enabled=result.flux_rifle_enabled,
-                min_glove_enabled=result.min_glove_enabled,
+                mine_glove_enabled=result.mine_glove_enabled,
                 morph_enabled=result.morph_enabled,
                 blitz_enabled=result.blitz_enabled,
                 rocket_enabled=result.rocket_enabled,
@@ -67,8 +67,7 @@ def uya_game(page: int = 1, session: Session = Depends(get_db)) -> Pagination[Uy
                 game_end_time=result.game_end_time,
                 game_duration=result.game_duration
             )
-            for index, (result, score)
-            in enumerate(results)
+            for index, result in enumerate(results)
         ]
     )
 

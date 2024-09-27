@@ -40,7 +40,8 @@ from horizon.parsing.uya_game import (
     uya_map_parser, 
     uya_time_parser, 
     uya_gamemode_parser,
-    uya_game_name_parser
+    uya_game_name_parser,
+    uya_weapon_parser
 )
 
 
@@ -105,6 +106,14 @@ def update_uya_gamehistory(
         existing_game.game_mode = uya_gamemode_parser(game["GenericField3"])[0]
         existing_game.game_submode = uya_gamemode_parser(game["GenericField3"])[1]
         existing_game.time_limit = uya_time_parser(game["GenericField3"])
+        existing_game.n60_enabled = uya_weapon_parser(game["PlayerSkillLevel"])["N60"]
+        existing_game.lava_gun_enabled = uya_weapon_parser(game["PlayerSkillLevel"])["Lava Gun"]
+        existing_game.gravity_bomb_enabled = uya_weapon_parser(game["PlayerSkillLevel"])["Gravity Bomb"]
+        existing_game.flux_rifle_enabled = uya_weapon_parser(game["PlayerSkillLevel"])["Flux Rifle"]
+        existing_game.mine_glove_enabled = uya_weapon_parser(game["PlayerSkillLevel"])["Mine Glove"]
+        existing_game.morph_enabled = uya_weapon_parser(game["PlayerSkillLevel"])["Morph O' Ray"]
+        existing_game.blitz_enabled = uya_weapon_parser(game["PlayerSkillLevel"])["Blitz Cannon"]
+        existing_game.rocket_enabled = uya_weapon_parser(game["PlayerSkillLevel"])["Rocket"]
         existing_game.game_create_time = datetime.fromisoformat(game["GameCreateDt"][:26])
         existing_game.game_start_time = datetime.fromisoformat(game["GameStartDt"][:26])
         existing_game.game_end_time = datetime.fromisoformat(game["GameEndDt"][:26])
@@ -119,14 +128,14 @@ def update_uya_gamehistory(
             game_mode=uya_gamemode_parser(game["GenericField3"])[0],
             game_submode=uya_gamemode_parser(game["GenericField3"])[1],
             time_limit=uya_time_parser(game["GenericField3"]),
-            n60_enabled=False,
-            lava_gun_enabled=False,
-            gravity_bomb_enabled=False,
-            flux_rifle_enabled=False,
-            min_glove_enabled=False,
-            morph_enabled=False,
-            blitz_enabled=False,
-            rocket_enabled=False,
+            n60_enabled=uya_weapon_parser(game["PlayerSkillLevel"])["N60"],
+            lava_gun_enabled=uya_weapon_parser(game["PlayerSkillLevel"])["Lava Gun"],
+            gravity_bomb_enabled=uya_weapon_parser(game["PlayerSkillLevel"])["Gravity Bomb"],
+            flux_rifle_enabled=uya_weapon_parser(game["PlayerSkillLevel"])["Flux Rifle"],
+            mine_glove_enabled=uya_weapon_parser(game["PlayerSkillLevel"])["Mine Glove"],
+            morph_enabled=uya_weapon_parser(game["PlayerSkillLevel"])["Morph O' Ray"],
+            blitz_enabled=uya_weapon_parser(game["PlayerSkillLevel"])["Blitz Cannon"],
+            rocket_enabled=uya_weapon_parser(game["PlayerSkillLevel"])["Rocket"],
             game_create_time=datetime.fromisoformat(game["GameCreateDt"][:26]),
             game_start_time=datetime.fromisoformat(game["GameStartDt"][:26]),
             game_end_time=datetime.fromisoformat(game["GameEndDt"][:26]),
@@ -167,7 +176,7 @@ def update_uya_gamehistory(
                     existing_player_game_stats.flux_rifle_deaths = player_cleaned_stats["Flux Rifle Deaths"]
                     existing_player_game_stats.flux_rifle_kills = player_cleaned_stats["Flux Rifle Kills"]
                     existing_player_game_stats.mine_glove_deaths = player_cleaned_stats["Mine Glove Deaths"]
-                    existing_player_game_stats.min_glove_kills = player_cleaned_stats["Mine Glove Kills"]
+                    existing_player_game_stats.mine_glove_kills = player_cleaned_stats["Mine Glove Kills"]
                     existing_player_game_stats.morph_deaths = player_cleaned_stats["Morph-O-Ray Deaths"]
                     existing_player_game_stats.morph_kills = player_cleaned_stats["Morph-O-Ray Kills"]
                     existing_player_game_stats.blitz_deaths = player_cleaned_stats["Blitz Cannon Deaths"]
@@ -198,7 +207,7 @@ def update_uya_gamehistory(
                     flux_rifle_deaths = player_cleaned_stats["Flux Rifle Deaths"],
                     flux_rifle_kills = player_cleaned_stats["Flux Rifle Kills"],
                     mine_glove_deaths = player_cleaned_stats["Mine Glove Deaths"],
-                    min_glove_kills = player_cleaned_stats["Mine Glove Kills"],
+                    mine_glove_kills = player_cleaned_stats["Mine Glove Kills"],
                     morph_deaths = player_cleaned_stats["Morph-O-Ray Deaths"],
                     morph_kills = player_cleaned_stats["Morph-O-Ray Kills"],
                     blitz_deaths = player_cleaned_stats["Blitz Cannon Deaths"],

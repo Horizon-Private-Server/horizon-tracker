@@ -289,7 +289,7 @@ class UyaGameOnlineSchema(BaseModel):
     game_status: str
     time_started: str
     map: str
-    time_limit: str
+    time_limit: int
     game_mode: str
     game_type: str
     players: list[UyaPlayerOnlineSchema]
@@ -306,7 +306,7 @@ class UyaGameHistoryEntry(BaseModel):
     lava_gun_enabled: bool
     gravity_bomb_enabled: bool
     flux_rifle_enabled: bool
-    min_glove_enabled: bool
+    mine_glove_enabled: bool
     morph_enabled: bool
     blitz_enabled: bool
     rocket_enabled: bool
@@ -314,4 +314,4 @@ class UyaGameHistoryEntry(BaseModel):
     game_create_time: datetime
     game_start_time: datetime
     game_end_time: datetime
-    game_duration: int
+    game_duration: float
