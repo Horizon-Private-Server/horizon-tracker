@@ -26,9 +26,9 @@ class UyaGameHistory(Base):
     blitz_enabled = Column(Boolean, default=False, nullable=False)
     rocket_enabled = Column(Boolean, default=False, nullable=False)
 
-    game_create_time = Column(DateTime, default=False, nullable=False)
-    game_start_time = Column(DateTime, default=False, nullable=False)
-    game_end_time = Column(DateTime, default=False, nullable=False)
+    game_create_time = Column(DateTime, nullable=False)
+    game_start_time = Column(DateTime, nullable=False)
+    game_end_time = Column(DateTime, nullable=False)
     game_duration = Column(Float, default=0, nullable=False) # In minutes
 
     players = relationship("UyaPlayerGameStats", back_populates="game", cascade="all, delete")

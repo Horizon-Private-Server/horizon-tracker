@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from datetime import datetime
 
 class Pagination[T](BaseModel):
     count: int
@@ -294,3 +295,23 @@ class UyaGameOnlineSchema(BaseModel):
     players: list[UyaPlayerOnlineSchema]
     last_updated: str
 
+class UyaGameHistoryEntry(BaseModel):
+    status: str
+    game_map: str
+    game_name: str
+    game_mode: str
+    game_submode: str
+    time_limit: int
+    n60_enabled: bool
+    lava_gun_enabled: bool
+    gravity_bomb_enabled: bool
+    flux_rifle_enabled: bool
+    min_glove_enabled: bool
+    morph_enabled: bool
+    blitz_enabled: bool
+    rocket_enabled: bool
+
+    game_create_time: datetime
+    game_start_time: datetime
+    game_end_time: datetime
+    game_duration: int

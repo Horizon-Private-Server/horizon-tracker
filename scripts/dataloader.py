@@ -53,10 +53,10 @@ if __name__ == "__main__":
 
     ### DL
     start_time: datetime = datetime.now()
-    with open("dl_stats.json") as stream:
+    with open("dl_stats_ntsc.json") as stream:
         all_stats: dict[str, dict] = json.load(stream)
 
-    for account_id in tqdm(all_stats, desc="Ingesting DL data into Postgres..."):
+    for account_id in tqdm(all_stats, desc="Ingesting DL (ntsc) data into Postgres..."):
         account_full = all_stats[account_id]
 
         update_player_vanilla_stats(

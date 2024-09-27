@@ -110,7 +110,6 @@ def update_uya_gamehistory(
         existing_game.game_end_time = datetime.fromisoformat(game["GameEndDt"][:26])
         existing_game.game_duration = (datetime.fromisoformat(game["GameEndDt"][:26]) - datetime.fromisoformat(game["GameStartDt"][:26])).total_seconds() / 60
     else:
-        print(f"Adding new record: {int(game['Id'])}")
         # Create a new record
         new_game_model = UyaGameHistory(
             id=int(game["Id"]),
