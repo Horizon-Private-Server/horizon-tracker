@@ -3,10 +3,22 @@ from typing import Optional
 import aiohttp
 import asyncio
 import logging
+from asyncpg.exceptions import ConnectionDoesNotExistError
 
 import requests
 
-logger = logging.getLogger("uvicorn")  # Get the uvicorn logger
+from app.utils.database import retry_async
+
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
+
+
 
 def authenticate(protocol: str, host: str, username: str, password: str) -> str:
     """
@@ -38,7 +50,7 @@ def authenticate(protocol: str, host: str, username: str, password: str) -> str:
 
     return auth_response_json["Token"]
 
-
+@retry_async(retries=3, delay=2)
 async def authenticate_async(protocol: str, host: str, username: str, password: str) -> str:
     """
     Makes an asynchronous authentication POST request to the Horizon Middleware server
@@ -59,13 +71,15 @@ async def authenticate_async(protocol: str, host: str, username: str, password: 
         "Password": password
     }
 
+    #raise ConnectionDoesNotExistError('test')
+
     async with aiohttp.ClientSession() as session:
         async with session.post(authentication_url, json=authentication_body, ssl=protocol != "https") as response:
             response_text = await response.text()
             auth_response_json: dict[str, any] = json.loads(response_text)
             return auth_response_json["Token"]
 
-
+@retry_async(retries=3, delay=2)
 async def get_all_accounts_async(protocol: str, host: str, app_id: str | int, token: str) -> list[dict[str, any]]:
     """
     Makes an asynchronous request to the Horizon Middleware leaderboard API which functionally
@@ -87,8 +101,8 @@ async def get_all_accounts_async(protocol: str, host: str, app_id: str | int, to
             logger.warning(f"get_all_accounts got {response.status} from {protocol}://{host}")
             return []
 
-
-async def get_account_basic_stats_async(protocol: str, host: str, account_id: str | int, app_id: str | int, token: str) -> Optional[dict[str, any]]:
+@retry_async(retries=3, delay=2)
+async def get_account_basic_stats_async(protocol: str, host: str, account_id: str | int, app_id: str | int, token: str) -> dict:
     """
     Makes a request to the Horizon Middleware account API which returns
     all basic stats for a user (including vanilla and custom stats).
@@ -108,8 +122,10 @@ async def get_account_basic_stats_async(protocol: str, host: str, account_id: st
             if response.status == 200:
                 return await response.json()  # Parse the response as JSON if status is OK
             logger.warning(f"get_account_basic_stats got {response.status} from {protocol}://{host}")
-            return []
+            return {}
 
+
+@retry_async(retries=3, delay=2)
 async def get_players_online(protocol: str, host: str, token: str) -> list[dict[str, any]]:
     """
     Makes a request to the Horizon Middleware account API which returns
@@ -131,6 +147,7 @@ async def get_players_online(protocol: str, host: str, token: str) -> list[dict[
             logger.warning(f"get_players_online got {response.status} from {protocol}://{host}")
             return []
 
+@retry_async(retries=3, delay=2)
 async def get_active_games(protocol: str, host: str, token: str) -> list[dict[str, any]]:
     """
     Makes a request to the Horizon Middleware account API which returns
@@ -152,6 +169,7 @@ async def get_active_games(protocol: str, host: str, token: str) -> list[dict[st
             logger.warning(f"get_active_games got {response.status} from {protocol}://{host}")
             return []
 
+@retry_async(retries=3, delay=2)
 async def get_recent_stats(protocol: str, host: str, token: str, minutes: int=5) -> list[dict[str, any]]:
     """
     Makes a request to the Horizon Middleware account API which returns
@@ -175,6 +193,7 @@ async def get_recent_stats(protocol: str, host: str, token: str, minutes: int=5)
             return []
 
 
+@retry_async(retries=3, delay=2)
 async def get_recent_game_history(protocol: str, host: str, token: str, app_id: int, minutes: int=5) -> list[dict[str, any]]:
     """
     Makes a request to the Horizon Middleware account API which returns
