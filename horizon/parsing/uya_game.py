@@ -111,29 +111,27 @@ def uya_time_parser(generic_field_3: int) -> int:
 
 def uya_gamemode_parser(generic_field_3: int) -> tuple[str, str]:
     # # Pass in Generic Field 3 (integer)
-    # TODO: Fix typing etc. Had to revert because there was bug in fixed version with 
-    # types
-    def internal_parser(num):
+    def internal_parser(raw_input:int):
         '''Accepts generic_field_3 INTEGER number (which is 4 a byte long hex string)
         returns game MODE andd game SUBMODE/ type'''
-        num = int(num) if type(num) != 'int' else num
-        num = struct.pack('<I', num).hex()
-        num=num[2:] #cut off the front 2 bytes
-        num = int(num,16)
-        num = format(num, "#026b")[2:]
-        game_mode = MODE_BITMAP[num[3:5]] if num[3:5] in MODE_BITMAP else "Unknown Game Mode"
-        isTeams = True if num[SUBMODE_BITMAP['isTeams']] == '1' else False
-        isAttrition = True if num[SUBMODE_BITMAP['isAttrition']]== '1' else False
+        int_casted:int = int(raw_input) if type(raw_input) != 'int' else raw_input
+        num_hex:str = struct.pack('<I', int_casted).hex()
+        hex_last:str =num_hex[2:] #cut off the front 2 bytes
+        int_cleaned:int = int(hex_last,16)
+        num_bitmask:str = format(int_cleaned, "#026b")[2:]
+        _game_mode:str = MODE_BITMAP[num_bitmask[3:5]] if num_bitmask[3:5] in MODE_BITMAP else "Unknown Game Mode"
+        is_teams:bool = True if num_bitmask[SUBMODE_BITMAP['isTeams']] == '1' else False
+        is_attrition:bool = True if num_bitmask[SUBMODE_BITMAP['isAttrition']]== '1' else False
 
-        if game_mode == MODE_BITMAP['00']:
-            game_type = "Attrition" if isAttrition else "Normal"
-        elif game_mode == MODE_BITMAP['01']:
-            game_type = "Chaos" if isAttrition else "Normal"
-        elif game_mode == MODE_BITMAP['10']:
-            game_type = "Teams" if isTeams else "FFA"
+        if _game_mode == MODE_BITMAP['00']:
+            _game_type = "Attrition" if is_attrition else "Normal"
+        elif _game_mode == MODE_BITMAP['01']:
+            _game_type = "Chaos" if is_attrition else "Normal"
+        elif _game_mode == MODE_BITMAP['10']:
+            _game_type = "Teams" if is_teams else "FFA"
         else:
-            game_type = "Game Type Not Found"
-        return game_mode, game_type
+            _game_type = "Game Type Not Found"
+        return _game_mode, _game_type
     try:
         game_mode, game_type = try_parse_value(internal_parser, generic_field_3)
     except:
@@ -155,10 +153,9 @@ def uya_weapon_parser(player_skill_level:int) -> dict[str, bool]:
         "Flux Rifle": False
     }
     try:
-        num = format(player_skill_level, "#010b")[-8:]
-        res = []
-        for i in range(len(num)-1, -1, -1):
-            if num[i] == "0":
+        bitmask:str = format(player_skill_level, "#010b")[-8:]
+        for i in range(len(bitmask)-1, -1, -1):
+            if bitmask[i] == "0":
                 result[WEAPONS[i]] = True
         return result
     except Exception as e:
