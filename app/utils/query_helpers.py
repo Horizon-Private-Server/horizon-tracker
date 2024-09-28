@@ -131,7 +131,7 @@ async def update_player_vanilla_stats_async(
 
     logger.debug(f"update_player_vanilla_stats_async: {player_id} Got options: {options}")
     # Create a select statement with the filter condition
-    stmt = select(player_class).options(*options).filter_by(horizon_id=int(player_id))
+    stmt = select(player_class).options(*options).filter_by(id=int(player_id))
     # Execute the statement asynchronously
     result = await session.execute(stmt)
     # Fetch the first result
@@ -147,7 +147,7 @@ async def update_player_vanilla_stats_async(
             return
         logger.debug(f"update_player_vanilla_stats_async: Creating user: {player_id} {player_info['AccountName']}")
 
-        player = player_class(username=player_info["AccountName"], horizon_id=player_id)
+        player = player_class(username=player_info["AccountName"], id=player_id)
         session.add(player)
         await session.flush()
         await session.commit()
