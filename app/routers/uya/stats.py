@@ -67,7 +67,7 @@ def uya_leaderboard(domain: str, stat: str, page: int = 1, session: Session = De
     query: Query = session.query(UyaPlayer) \
         .join(stat_domain) \
         .add_columns(column(stat)) \
-        .order_by(getattr(stat_domain, stat).desc(), UyaPlayer.horizon_id.asc())
+        .order_by(getattr(stat_domain, stat).desc(), UyaPlayer.id.asc())
 
     results: list[tuple[UyaPlayer, int]] = list(query.offset(100 * page).limit(100))
 
@@ -77,7 +77,7 @@ def uya_leaderboard(domain: str, stat: str, page: int = 1, session: Session = De
         count=count,
         results=[
             LeaderboardEntry(
-                horizon_id=result.horizon_id,
+                id=result.id,
                 username=result.username,
                 score=score,
                 rank=(100 * page) + index + 1
@@ -87,15 +87,15 @@ def uya_leaderboard(domain: str, stat: str, page: int = 1, session: Session = De
         ]
     )
 
-@router.get("/player/{horizon_id}")
-def uya_player(horizon_id: int, session: Session = Depends(get_db)) -> UyaPlayerDetailsSchema:
+@router.get("/player/{id}")
+def uya_player(id: int, session: Session = Depends(get_db)) -> UyaPlayerDetailsSchema:
     """
     Generate a paginated leaderboard (100 entries per page) for all Deadlocked stats. `domain` is a game mode or
     collection of stats (e.g., conquest, ctf, weapon, vehicle, etc.) and `stat` is a field that belongs to the parent
     stat domain. All domains and all stats are formatted in snake case.
     """
 
-    query: Query = session.query(UyaPlayer).filter_by(horizon_id=horizon_id)
+    query: Query = session.query(UyaPlayer).filter_by(id=id)
 
     stat_domains: dict[str, type[DeclarativeBase]] = get_stat_domains("uya")
     for domain in stat_domains:
@@ -106,7 +106,7 @@ def uya_player(horizon_id: int, session: Session = Depends(get_db)) -> UyaPlayer
     result: UyaPlayer = query.first()
 
     if result is None:
-        raise HTTPException(status_code=404, detail=f"Player with ID '{horizon_id}' not found.")
+        raise HTTPException(status_code=404, detail=f"Player with ID '{id}' not found.")
 
     stat_schema_dictionary: dict[str, type[BaseModel]] = {
         "overall_stats": UyaOverallStatsSchema,
@@ -117,7 +117,7 @@ def uya_player(horizon_id: int, session: Session = Depends(get_db)) -> UyaPlayer
 
     # TODO This is a very convoluted one-liner, add better documentation.
     return UyaPlayerDetailsSchema(
-        horizon_id=result.horizon_id,
+        id=result.id,
         username=result.username,
         **{
             stat_schema_key: stat_schema_dictionary[stat_schema_key](

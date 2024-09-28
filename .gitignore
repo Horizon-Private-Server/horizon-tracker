@@ -172,6 +172,11 @@ dl_stats.json
 uya_stats.json
 dl_gamehistory.json
 uya_gamehistory.json
+uya_stats_ntsc.json
+uya_stats_pal.json
+dl_stats_ntsc.json
+dl_stats_pal.json
+
 
 # Alembic
 alembic/versions/

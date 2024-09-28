@@ -23,7 +23,7 @@ if __name__ == "__main__":
     for game in ("uya", "dl"):
         protocol: str = CREDENTIALS[game]["horizon_middleware_protocol"]
         host: str = CREDENTIALS[game]["horizon_middleware_host"]
-        horizon_app_id: int = CREDENTIALS[game]["horizon_app_id"]
+        horizon_app_id_ntsc: int = CREDENTIALS[game]["horizon_app_id_ntsc"]
         horizon_username: str = CREDENTIALS[game]["horizon_middleware_username"]
         horizon_password: str = CREDENTIALS[game]["horizon_middleware_password"]
 
@@ -34,33 +34,36 @@ if __name__ == "__main__":
             password=horizon_password
         )
 
-        # Process player stats
-        all_players: list[dict[str, any]] = get_all_accounts(
-            protocol=protocol,
-            host=host,
-            app_id=horizon_app_id,
-            token=token
-        )
+        for game_version in ("ntsc", "pal"):
+            app_id = CREDENTIALS[game][f"horizon_app_id_{game_version}"]
 
-        all_stats: dict = dict()
-
-        start_time: datetime = datetime.now()
-        for leaderboard_item in tqdm(all_players, desc=f"Pulling stats from {game.upper()} Horizon Production..."):
-            all_stats[leaderboard_item["AccountId"]] = get_account_basic_stats(
+            # Process player stats
+            all_players: list[dict[str, any]] = get_all_accounts(
                 protocol=protocol,
                 host=host,
-                account_id=leaderboard_item["AccountId"],
-                app_id=horizon_app_id,
+                app_id=app_id,
                 token=token
             )
-        time_taken: timedelta = datetime.now() - start_time
-        minutes, seconds = divmod(time_taken.total_seconds(), 60)
-        print(f"Time taken: {int(minutes)} minutes and {seconds:.2f} seconds")
 
-        with open(f"{game}_stats.json", "w") as stream:
-            json.dump(all_stats, stream)
+            all_stats: dict = dict()
+
+            start_time: datetime = datetime.now()
+            for leaderboard_item in tqdm(all_players, desc=f"Pulling stats from {game.upper()} ({game_version}) Horizon Production..."):
+                all_stats[leaderboard_item["AccountId"]] = get_account_basic_stats(
+                    protocol=protocol,
+                    host=host,
+                    account_id=leaderboard_item["AccountId"],
+                    app_id=app_id,
+                    token=token
+                )
+            time_taken: timedelta = datetime.now() - start_time
+            minutes, seconds = divmod(time_taken.total_seconds(), 60)
+            print(f"Time taken: {int(minutes)} minutes and {seconds:.2f} seconds")
+
+            with open(f"{game}_stats_{game_version}.json", "w") as stream:
+                json.dump(all_stats, stream)
 
         # Process game history
-        game_history: list[dict] = get_all_game_history(protocol, host, horizon_app_id, token, str(datetime.now()))
+        game_history: list[dict] = get_all_game_history(protocol, host, horizon_app_id_ntsc, token, str(datetime.now()))
         with open(f"{game}_gamehistory.json", "w") as stream:
             json.dump(game_history, stream)

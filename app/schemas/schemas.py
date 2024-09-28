@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from datetime import datetime
 
 class Pagination[T](BaseModel):
     count: int
@@ -6,7 +7,7 @@ class Pagination[T](BaseModel):
 
 
 class LeaderboardEntry(BaseModel):
-    horizon_id: int
+    id: int
     username: str
     rank: int
     score: int
@@ -185,7 +186,7 @@ class DeadlockedTrainingStatsSchema(BaseModel):
 
 class DeadlockedPlayerDetailsSchema(BaseModel):
 
-    horizon_id: int
+    id: int
     username: str
 
     overall_stats: DeadlockedOverallStatsSchema
@@ -261,7 +262,7 @@ class UyaCTFStatsSchema(UyaStatsBase):
 
 class UyaPlayerDetailsSchema(BaseModel):
 
-    horizon_id: int
+    id: int
     username: str
 
     overall_stats: UyaOverallStatsSchema
@@ -288,9 +289,29 @@ class UyaGameOnlineSchema(BaseModel):
     game_status: str
     time_started: str
     map: str
-    time_limit: str
+    time_limit: int
     game_mode: str
     game_type: str
     players: list[UyaPlayerOnlineSchema]
     last_updated: str
 
+class UyaGameHistoryEntry(BaseModel):
+    status: str
+    game_map: str
+    game_name: str
+    game_mode: str
+    game_submode: str
+    time_limit: int
+    n60_enabled: bool
+    lava_gun_enabled: bool
+    gravity_bomb_enabled: bool
+    flux_rifle_enabled: bool
+    mine_glove_enabled: bool
+    morph_enabled: bool
+    blitz_enabled: bool
+    rocket_enabled: bool
+
+    game_create_time: datetime
+    game_start_time: datetime
+    game_end_time: datetime
+    game_duration: float

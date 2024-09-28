@@ -7,3 +7,9 @@ from app.models.uya.uya_player import (
     UyaCTFStats,
     UyaDeathmatchStats,
 )
+
+from app.models.uya.uya_game_history import (
+    UyaGameHistory,
+    UyaPlayerGameStats,
+    Base,
+)

@@ -10,9 +10,7 @@ from app.database import Base
 class UyaOverallStats(Base):
     __tablename__ = "uya_overall_stats"
 
-    id = Column(Integer, primary_key=True, index=True, unique=True)
-
-    player_id = Column(Integer, ForeignKey("uya_player.id", ondelete="CASCADE"))
+    player_id = Column(Integer, ForeignKey("uya_player.id", ondelete="CASCADE"), primary_key=True, index=True, unique=True)
     player = relationship("UyaPlayer", uselist=False, back_populates="overall_stats")
 
     rank = Column(Integer, default=0, nullable=False)
@@ -44,9 +42,7 @@ class UyaOverallStats(Base):
 class UyaDeathmatchStats(Base):
     __tablename__ = "uya_deathmatch_stats"
 
-    id = Column(Integer, primary_key=True, index=True, unique=True)
-
-    player_id = Column(Integer, ForeignKey("uya_player.id", ondelete="CASCADE"))
+    player_id = Column(Integer, ForeignKey("uya_player.id", ondelete="CASCADE"), primary_key=True, index=True, unique=True)
     player = relationship("UyaPlayer", uselist=False, back_populates="deathmatch_stats")
 
     rank = Column(Integer, default=0, nullable=False)
@@ -66,9 +62,7 @@ class UyaDeathmatchStats(Base):
 class UyaCTFStats(Base):
     __tablename__ = "uya_ctf_stats"
 
-    id = Column(Integer, primary_key=True, index=True, unique=True)
-
-    player_id = Column(Integer, ForeignKey("uya_player.id", ondelete="CASCADE"))
+    player_id = Column(Integer, ForeignKey("uya_player.id", ondelete="CASCADE"), primary_key=True, index=True, unique=True)
     player = relationship("UyaPlayer", uselist=False, back_populates="ctf_stats")
 
     rank = Column(Integer, default=0, nullable=False)
@@ -96,9 +90,7 @@ class UyaCTFStats(Base):
 class UyaSiegeStats(Base):
     __tablename__ = "uya_siege_stats"
 
-    id = Column(Integer, primary_key=True, index=True, unique=True)
-
-    player_id = Column(Integer, ForeignKey("uya_player.id", ondelete="CASCADE"))
+    player_id = Column(Integer, ForeignKey("uya_player.id", ondelete="CASCADE"), primary_key=True, index=True, unique=True)
     player = relationship("UyaPlayer", uselist=False, back_populates="siege_stats")
 
     rank = Column(Integer, default=0, nullable=False)
@@ -122,9 +114,7 @@ class UyaSiegeStats(Base):
 class UyaWeaponStats(Base):
     __tablename__ = "uya_weapon_stats"
 
-    player_id = Column(Integer, ForeignKey("uya_player.id", ondelete="CASCADE"))
-    id = Column(Integer, primary_key=True, index=True, unique=True)
-
+    player_id = Column(Integer, ForeignKey("uya_player.id", ondelete="CASCADE"), primary_key=True, index=True, unique=True)
     player = relationship("UyaPlayer", uselist=False, back_populates="weapon_stats")
 
     n60_deaths = Column(Integer, default=0, nullable=False)
@@ -136,7 +126,7 @@ class UyaWeaponStats(Base):
     flux_rifle_deaths = Column(Integer, default=0, nullable=False)
     flux_rifle_kills = Column(Integer, default=0, nullable=False)
     mine_glove_deaths = Column(Integer, default=0, nullable=False)
-    min_glove_kills = Column(Integer, default=0, nullable=False)
+    mine_glove_kills = Column(Integer, default=0, nullable=False)
     morph_deaths = Column(Integer, default=0, nullable=False)
     morph_kills = Column(Integer, default=0, nullable=False)
     blitz_deaths = Column(Integer, default=0, nullable=False)
@@ -151,12 +141,11 @@ class UyaPlayer(Base):
     __tablename__ = "uya_player"
 
     id = Column(Integer, primary_key=True, index=True, unique=True)
-    horizon_id = Column(Integer, index=True, unique=True, nullable=False)
 
-    # TODO This should have a unique constraint, but there are duplicates in the Horizon Prod data.
-    # TODO Wait for a Prod stats cleanup.
-    username = Column(String, nullable=False)
-
+    # Note: There are duplicates in Deadlocked only because prod has both NTSC and PAL which each have their own set of usernames.
+    # You can have user "test123" in NTSC, and a different account "test123" in PAL (deadlocked). UYA Shares
+    # usernames across so UYA can have this unique
+    username = Column(String, nullable=False, unique=True)
 
     # Vanilla Stats
     overall_stats = relationship("UyaOverallStats", uselist=False, back_populates="player", cascade="all, delete")

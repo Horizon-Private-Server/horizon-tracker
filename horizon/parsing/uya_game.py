@@ -1,5 +1,6 @@
 import struct
 
+
 MAP_BITMAP = {
     "00001":"Bakisi Isles",
     "00010":"Hoven Gorge",
@@ -14,14 +15,14 @@ MAP_BITMAP = {
 }
 
 TIME_BITMAP = {
-    "000":"No Time Limit",
-    "001":"5 Minutes",
-    "010":"10 Minutes",
-    "011":"15 Minutes",
-    "100":"20 Minutes",
-    "101":"25 Minutes",
-    "110":"30 Minutes",
-    "111":"35 Minutes",
+    "000": 0,
+    "001": 5,
+    "010": 10,
+    "011": 15,
+    "100": 20,
+    "101": 25,
+    "110": 30,
+    "111": 35,
 }
 
 MODE_BITMAP = { #3,4
@@ -37,6 +38,17 @@ SUBMODE_BITMAP = {
     "isAttrition":20, #1 = yes #consitutes also as chaos ctf
 }
 
+WEAPONS = {
+    0:"Lava Gun",
+    1:"Morph O' Ray",
+    2:"Mine Glove",
+    3:"Gravity Bomb",
+    4:"Rocket",
+    5:"Blitz Cannon",
+    6:"N60",
+    7:"Flux Rifle"
+}
+
 
 def try_parse_value(func, num):
     # Function that ensures that if num is a negative integer, 
@@ -47,8 +59,13 @@ def try_parse_value(func, num):
     except:
         return func(num+2**32)
 
+def uya_game_name_parser(game_name: str) -> str:
+    return game_name[:15]
 
-def uya_map_parser(generic_field_3: int) -> str:
+def uya_map_parser(generic_field_3: int, metadata: dict) -> str:
+    if 'CustomMap' in metadata.keys() and metadata['CustomMap']:
+        return metadata['CustomMap']
+
     # Pass in Generic Field 3 (integer)
     def internal_parser(raw_input) -> str:
         """Accepts generic_field_3 INTEGER number (which is 4 a byte long hex string)"""
@@ -70,7 +87,7 @@ def uya_map_parser(generic_field_3: int) -> str:
 
 
 
-def uya_time_parser(generic_field_3: int) -> str:
+def uya_time_parser(generic_field_3: int) -> int:
     # Pass in Generic Field 3 (integer)
     def internal_parser(raw_input) -> str:
         """Accepts generic_field_3 INTEGER number (which is 4 a byte long hex string)"""
@@ -93,25 +110,24 @@ def uya_time_parser(generic_field_3: int) -> str:
 
 
 def uya_gamemode_parser(generic_field_3: int) -> tuple[str, str]:
-    # Pass in Generic Field 3 (integer)
+    # # Pass in Generic Field 3 (integer)
+    def internal_parser(raw_input:int):
+        '''Accepts generic_field_3 INTEGER number (which is 4 a byte long hex string)
+        returns game MODE andd game SUBMODE/ type'''
+        int_casted:int = int(raw_input) if type(raw_input) != 'int' else raw_input
+        num_hex:str = struct.pack('<I', int_casted).hex()
+        hex_last:str =num_hex[2:] #cut off the front 2 bytes
+        int_cleaned:int = int(hex_last,16)
+        num_bitmask:str = format(int_cleaned, "#026b")[2:]
+        _game_mode:str = MODE_BITMAP[num_bitmask[3:5]] if num_bitmask[3:5] in MODE_BITMAP else "Unknown Game Mode"
+        is_teams:bool = True if num_bitmask[SUBMODE_BITMAP['isTeams']] == '1' else False
+        is_attrition:bool = True if num_bitmask[SUBMODE_BITMAP['isAttrition']]== '1' else False
 
-    def internal_parser(raw_input) -> tuple[str]:
-        """Accepts generic_field_3 INTEGER number (which is 4 a byte long hex string)
-        returns game MODE andd game SUBMODE/ type"""
-        raw_int:int = int(raw_input) if type(raw_input) is not int else raw_input
-        raw_hex:str = struct.pack("<I", raw_int).hex()
-        last_bytes:str = raw_hex[2:] #cut off the front 2 bytes
-        int_base_16:int = int(last_bytes,16)
-        bitmask:int = format(int_base_16, "#026b")[2:]
-        _game_mode:int = MODE_BITMAP[bitmask[3:5]] if bitmask[3:5] in MODE_BITMAP else "Unknown Game Mode"
-        is_teams:bool = True if bitmask[SUBMODE_BITMAP["isTeams"]] == "1" else False
-        is_attrition:bool = True if bitmask[SUBMODE_BITMAP["isAttrition"]]== "1" else False
-
-        if game_mode == MODE_BITMAP["00"]:
+        if _game_mode == MODE_BITMAP['00']:
             _game_type = "Attrition" if is_attrition else "Normal"
-        elif game_mode == MODE_BITMAP["01"]:
+        elif _game_mode == MODE_BITMAP['01']:
             _game_type = "Chaos" if is_attrition else "Normal"
-        elif game_mode == MODE_BITMAP["10"]:
+        elif _game_mode == MODE_BITMAP['10']:
             _game_type = "Teams" if is_teams else "FFA"
         else:
             _game_type = "Game Type Not Found"
@@ -119,6 +135,29 @@ def uya_gamemode_parser(generic_field_3: int) -> tuple[str, str]:
     try:
         game_mode, game_type = try_parse_value(internal_parser, generic_field_3)
     except:
-        game_mode, game_type = "Unkown Game Mode", "Unknown Game Type"
+        game_mode, game_type = 'Unkown Game Mode', 'Unknown Game Type'
 
     return game_mode, game_type
+
+
+
+def uya_weapon_parser(player_skill_level:int) -> dict[str, bool]:
+    result = {
+        "Lava Gun": False,
+        "Morph O' Ray": False,
+        "Mine Glove": False,
+        "Gravity Bomb": False,
+        "Rocket": False,
+        "Blitz Cannon": False,
+        "N60": False,
+        "Flux Rifle": False
+    }
+    try:
+        bitmask:str = format(player_skill_level, "#010b")[-8:]
+        for i in range(len(bitmask)-1, -1, -1):
+            if bitmask[i] == "0":
+                result[WEAPONS[i]] = True
+        return result
+    except Exception as e:
+        print(e)
+        return result

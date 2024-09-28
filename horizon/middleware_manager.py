@@ -52,7 +52,7 @@ class UyaOnlineTracker:
 
         self._protocol: str = CREDENTIALS["uya"]["horizon_middleware_protocol"]
         self._host: str = CREDENTIALS["uya"]["horizon_middleware_host"]
-        self._horizon_app_id: int = CREDENTIALS["uya"]["horizon_app_id"]
+        self._horizon_app_id: int = CREDENTIALS["uya"]["horizon_app_id_ntsc"]
         self._horizon_username: str = CREDENTIALS["uya"]["horizon_middleware_username"]
         self._horizon_password: str = CREDENTIALS["uya"]["horizon_middleware_password"]
 
@@ -174,7 +174,7 @@ class DeadlockedOnlineTracker:
 
         self._protocol: str = CREDENTIALS["dl"]["horizon_middleware_protocol"]
         self._host: str = CREDENTIALS["dl"]["horizon_middleware_host"]
-        self._horizon_app_id: int = CREDENTIALS["dl"]["horizon_app_id"]
+        self._horizon_app_id: int = CREDENTIALS["dl"]["horizon_app_id_ntsc"]
         self._horizon_username: str = CREDENTIALS["dl"]["horizon_middleware_username"]
         self._horizon_password: str = CREDENTIALS["dl"]["horizon_middleware_password"]
 
