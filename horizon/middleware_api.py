@@ -264,7 +264,7 @@ def get_account_basic_stats(protocol: str, host: str, account_id: str | int, app
     return json.loads(account_response.text)
 
 
-def get_all_game_history(protocol: str, host: str, app_id: str | int, token: str, game_end:str = '2024-09-19T15:36:54') -> Optional[dict[str, any]]:
+def get_all_game_history(protocol: str, host: str, app_id: str | int, token: str, game_end:str = '2024-09-19T15:36:54') -> list[dict[str, any]]:
     """
     Make a series of requests to get all game history.
 
