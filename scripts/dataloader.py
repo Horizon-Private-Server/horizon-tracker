@@ -21,7 +21,7 @@ if __name__ == "__main__":
     ### UYA
     for game_version in ("ntsc", "pal"):
         start_time = datetime.now()
-        with open(f"uya_stats_{game_version}.json") as stream:
+        with open(f"data/uya_stats_{game_version}.json") as stream:
             all_stats: dict[str, dict] = json.load(stream)
 
         for account_id in tqdm(all_stats, desc=f"Ingesting UYA ({game_version}) data into Postgres..."):
@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
     # Game History
     start_time = datetime.now()
-    with open("uya_gamehistory.json") as stream:
+    with open("data/uya_gamehistory.json") as stream:
         all_games: list[dict[str, any]] = json.load(stream)
 
     for game in tqdm(all_games, desc="Ingesting UYA Game History into Postgres..."):
@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     ### DL
     start_time: datetime = datetime.now()
-    with open("dl_stats_ntsc.json") as stream:
+    with open("data/dl_stats_ntsc.json") as stream:
         all_stats: dict[str, dict] = json.load(stream)
 
     for account_id in tqdm(all_stats, desc="Ingesting DL (ntsc) data into Postgres..."):
