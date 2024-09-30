@@ -179,6 +179,12 @@ def update_uya_gamehistory(
     else:
         game["Metadata"] = json.loads(game["Metadata"])
 
+    # Get player count
+    if "PreWideStats" in game["Metadata"].keys() and "Players" in game["Metadata"]["PreWideStats"].keys():
+        player_count:int = len(game["Metadata"]["PreWideStats"]["Players"])
+    else:
+        player_count = 0
+
     # Check if a record already exists
     existing_game = session.query(UyaGameHistory).filter_by(id=int(game["Id"])).first()
 
@@ -198,6 +204,7 @@ def update_uya_gamehistory(
         existing_game.morph_enabled = uya_weapon_parser(game["PlayerSkillLevel"])["Morph O' Ray"]
         existing_game.blitz_enabled = uya_weapon_parser(game["PlayerSkillLevel"])["Blitz Cannon"]
         existing_game.rocket_enabled = uya_weapon_parser(game["PlayerSkillLevel"])["Rocket"]
+        existing_game.player_count = player_count
         existing_game.game_create_time = datetime.fromisoformat(game["GameCreateDt"][:26])
         existing_game.game_start_time = datetime.fromisoformat(game["GameStartDt"][:26])
         existing_game.game_end_time = datetime.fromisoformat(game["GameEndDt"][:26])
@@ -220,6 +227,7 @@ def update_uya_gamehistory(
             morph_enabled=uya_weapon_parser(game["PlayerSkillLevel"])["Morph O' Ray"],
             blitz_enabled=uya_weapon_parser(game["PlayerSkillLevel"])["Blitz Cannon"],
             rocket_enabled=uya_weapon_parser(game["PlayerSkillLevel"])["Rocket"],
+            player_count=player_count,
             game_create_time=datetime.fromisoformat(game["GameCreateDt"][:26]),
             game_start_time=datetime.fromisoformat(game["GameStartDt"][:26]),
             game_end_time=datetime.fromisoformat(game["GameEndDt"][:26]),
