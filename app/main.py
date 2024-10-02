@@ -17,6 +17,8 @@ from app.routers.uya.game_history import router as uya_gamehistory_router
 from horizon.middleware_manager import uya_online_tracker
 from horizon.middleware_manager import dl_online_tracker
 
+from horizon.uya_live_tracker import uya_live_tracker
+
 
 ALLOWED_ORIGINS: list[str] = [
     "https://www.rac-horizon.com",
@@ -39,12 +41,15 @@ app.add_middleware(
 # Add background tasks
 @app.on_event("startup")
 async def start_background_tasks():
+    await uya_live_tracker.start(asyncio.get_event_loop())
+
     asyncio.create_task(uya_online_tracker.refresh_token())
     asyncio.create_task(uya_online_tracker.update_recent_stat_changes())
     asyncio.create_task(uya_online_tracker.poll_active_online())
     asyncio.create_task(dl_online_tracker.refresh_token())
     #asyncio.create_task(dl_online_tracker.update_recent_stat_changes())    # Will work once DL middleware is updated
     asyncio.create_task(dl_online_tracker.poll_active_online())
+
 
 # Add sub-APIs.
 app.include_router(deadlocked_stats_router)
