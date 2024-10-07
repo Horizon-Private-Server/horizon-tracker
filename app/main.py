@@ -1,6 +1,6 @@
 import asyncio
 
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import SessionLocal
@@ -76,3 +76,15 @@ async def root():
     """
     return {"message": "Hello World"}
 
+
+@app.websocket("/uya-live-ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    uya_live_tracker.add_connection(websocket)
+    try:
+        while True:
+            await uya_live_tracker.write(websocket)
+    except Exception as e:
+        print(f"uya-live-ws Error: {e}")
+    finally:
+        uya_live_tracker.remove_connection(websocket)
