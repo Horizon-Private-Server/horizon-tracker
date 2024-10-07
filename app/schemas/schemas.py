@@ -285,6 +285,7 @@ class DeadlockedGameOnlineSchema(BaseModel):
     last_updated: str
 
 class UyaGameOnlineSchema(BaseModel):
+    id: int
     name: str
     game_status: str
     time_started: str

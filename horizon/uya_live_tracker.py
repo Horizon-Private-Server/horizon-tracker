@@ -7,6 +7,9 @@ from logging import handlers
 from datetime import datetime
 from livetrackerbackend import LiveTrackerBackend
 
+from horizon.middleware_manager import uya_online_tracker
+
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 stream_handler = logging.StreamHandler()
@@ -19,7 +22,7 @@ import websockets
 
 
 class UyaLiveTracker():
-    def __init__(self, port:int=8888, read_tick_rate:int=60, write_tick_rate:int=15):
+    def __init__(self, port:int=8888, read_tick_rate:int=60, write_tick_rate:int=15, read_games_api_rate:int=10):
 
         self._backend = LiveTrackerBackend(server_ip=os.getenv('SOCKET_IP'), log_level='INFO')
         self._ip = '0.0.0.0'
@@ -27,11 +30,15 @@ class UyaLiveTracker():
 
         self._connected = set()
 
+        # In seconds
+        self._read_games_api_rate = read_games_api_rate
+
         # Ticks per second
         self._read_tick_rate = read_tick_rate / 60
         self._write_tick_rate = write_tick_rate / 60
 
         self._world_state = []
+        self._games = dict()
 
 
     async def start(self, loop):
@@ -39,6 +46,7 @@ class UyaLiveTracker():
         await self.start_websocket()
 
         loop.create_task(self.read_prod_socket())
+        loop.create_task(self.read_games_api())
         loop.create_task(self.flush())
 
     async def start_websocket(self):
@@ -48,7 +56,26 @@ class UyaLiveTracker():
     async def read_prod_socket(self):
         while True:
             try:
-                self._world_state = self._backend.get_world_states()
+                worlds:list[dict] = self._backend.get_world_states()
+                self._world_state = []
+
+                for world in worlds:
+                    if world["world_id"] not in self._games.keys():
+                        continue
+                    game = self._games[world["world_id"]]
+
+                    world_players = list(sorted(world["players"], key=lambda player: player["player_id"]))
+                    game_players = game.players
+                    for idx in range(min(len(world_players), len(game_players))):
+                        world_players[idx]["username"] = game_players[idx].username
+
+                    world["players"] = world_players
+                    world["map"] = game.map
+                    world["name"] = game.name
+                    world["game_mode"] = game.game_mode
+                    self._world_state.append(world)
+
+
             except Exception as e:
                 logger.error("read_prod_socket failed to update!", exc_info=True)
 
@@ -69,6 +96,15 @@ class UyaLiveTracker():
                 logger.error("flush failed to update!", exc_info=True)
 
             await asyncio.sleep(self._write_tick_rate)
+
+    async def read_games_api(self):
+        while True:
+            try:
+                games = uya_online_tracker.get_games()
+                self._games = {game.id-1: game for game in games}
+            except Exception as e:
+                logger.error("read_games_api failed to update!", exc_info=True)
+            await asyncio.sleep(self._read_games_api_rate)
 
     async def on_websocket_connection(self, websocket, path):
         logger.info(f"Websocket client connected: {websocket.remote_address}")
