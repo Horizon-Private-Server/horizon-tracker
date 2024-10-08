@@ -73,7 +73,7 @@ class UyaLiveTracker():
                     world_players = list(sorted(world.players, key=lambda player: player.player_id))
                     game_players = game.players
                     for idx in range(min(len(world_players), len(game_players))):
-                        world_players[idx].username = game_players[idx].username
+                        #world_players[idx].username = world_players[idx].username
                         world_players[idx].coord = self.transform_coord(world.map, world_players[idx].coord)
                     world.players = world_players
 
