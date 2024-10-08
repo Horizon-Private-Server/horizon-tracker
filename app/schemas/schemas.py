@@ -334,7 +334,7 @@ class UYALivePlayer(BaseModel):
     account_id: int
     team: str
     username: str
-    coord: tuple[int, int, int]
+    coord: tuple[float, float, float]
     cam_x: int
     weapon: Optional[str] = None
     upgrades: UYALivePlayerUpgrades
