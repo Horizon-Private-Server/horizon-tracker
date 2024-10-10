@@ -8,13 +8,17 @@ from app.database import (
     CREDENTIALS,
     SessionLocalAsync
 )
-from app.utils.query_helpers import update_player_vanilla_stats_async
+from app.utils.query_helpers import (
+    update_player_vanilla_stats_async,
+    update_uya_gamehistory_async
+)
 from horizon.middleware_api import (
     get_players_online, 
     authenticate_async, 
     authenticate, 
     get_active_games,
-    get_recent_stats
+    get_recent_stats,
+    get_recent_game_history
 )
 from horizon.parsing.uya_game import (
     uya_map_parser, 
@@ -37,7 +41,7 @@ stream_handler.setFormatter(formatter)
 logger.addHandler(stream_handler)
 
 class UyaOnlineTracker:
-    def __init__(self, players_online_poll_interval:int=60, token_poll_interval:int=3600, recent_stats_poll_interval:int=120):
+    def __init__(self, players_online_poll_interval:int=60, token_poll_interval:int=3600, recent_stats_poll_interval:int=120, recent_games_poll_interval:int=120):
         """
         Class to manager all middleware calls and polling.
 
@@ -47,6 +51,7 @@ class UyaOnlineTracker:
         self._players_online_poll_interval = players_online_poll_interval
         self._token_poll_interval = token_poll_interval
         self._recent_stats_poll_interval = recent_stats_poll_interval
+        self._recent_games_poll_interval = recent_games_poll_interval
         self._players_online = []
         self._games_online = []
 
@@ -114,7 +119,7 @@ class UyaOnlineTracker:
                     password=self._horizon_password
                 )
             except Exception as e:
-                logger.error("refresh_token failed to update!", exc_info=True)
+                logger.error("[uya] refresh_token failed to update!", exc_info=True)
 
             await asyncio.sleep(self._token_poll_interval)
 
@@ -126,7 +131,7 @@ class UyaOnlineTracker:
                 self._players_online: list[dict] = await get_players_online(self._protocol, self._host, self._token)
                 self._games_online: list[dict] = await get_active_games(self._protocol, self._host, self._token)
             except Exception as e:
-                logger.error("poll_active_online failed to update!", exc_info=True)
+                logger.error("[uya] poll_active_online failed to update!", exc_info=True)
 
             await asyncio.sleep(self._players_online_poll_interval)
 
@@ -136,7 +141,7 @@ class UyaOnlineTracker:
             try:
                 # API will return all accounts and their stats when they had a stat change in the past 5 minutes (max 60 minutes ago)
                 recent_stats: list[dict] = await get_recent_stats(self._protocol, self._host, self._token)
-                logger.debug(f"update_live_stats: RECENT STATS: {recent_stats}")
+                logger.debug(f"[uya] update_live_stats: RECENT STATS: {recent_stats}")
 
                 if len(recent_stats) > 0:
                     async with SessionLocalAsync() as session:
@@ -150,12 +155,30 @@ class UyaOnlineTracker:
                                 stats[int(stat_idx)-1] = stat_value
 
                             # Doesn't block the entire backend while updating DB with this players new stats
-                            logger.debug(f"update_live_stats: updating {horizon_account_id}, {stats}")
+                            logger.debug(f"[uya] update_live_stats: updating {horizon_account_id}, {stats}")
                             await update_player_vanilla_stats_async("uya", session, horizon_account_id, stats, self._protocol, self._host, self._horizon_app_id, self._token)
             except Exception as e:
-                logger.error("update_recent_stat_changes failed to update!", exc_info=True)
+                logger.error("[uya] update_recent_stat_changes failed to update!", exc_info=True)
 
             await asyncio.sleep(self._recent_stats_poll_interval)
+
+
+    async def update_recent_game_history(self) -> None:
+        while True:
+            # Try except so that if the db goes down, it will work when the db comes back online
+            try:
+                # API will return all accounts and games that are recently ended
+                recent_games: list[dict] = await get_recent_game_history(self._protocol, self._host, self._token, self._horizon_app_id)
+                logger.debug(f"[uya] update_live_stats: RECENT GAMES: {recent_games}")
+                if len(recent_games) > 0:
+                    async with SessionLocalAsync() as session:
+                        for recent_game in recent_games:
+                            await update_uya_gamehistory_async(deepcopy(recent_game), session)
+            except Exception as e:
+                logger.error("[uya] update_recent_game_history failed to update!", exc_info=True)
+
+            await asyncio.sleep(self._recent_games_poll_interval)
+
 
 
 class DeadlockedOnlineTracker:
@@ -224,7 +247,7 @@ class DeadlockedOnlineTracker:
                     password=self._horizon_password
                 )
             except Exception as e:
-                logger.error("refresh_token failed to update!", exc_info=True)
+                logger.error("[dl] refresh_token failed to update!", exc_info=True)
 
             await asyncio.sleep(self._token_poll_interval)
 
@@ -235,7 +258,7 @@ class DeadlockedOnlineTracker:
                 self._players_online: list[dict] = await get_players_online(self._protocol, self._host, self._token)
                 self._games_online: list[dict] = await get_active_games(self._protocol, self._host, self._token)
             except Exception as e:
-                logger.error("poll_active_online failed to update!", exc_info=True)
+                logger.error("[dl] poll_active_online failed to update!", exc_info=True)
 
             await asyncio.sleep(self._players_online_poll_interval)
 
@@ -244,7 +267,7 @@ class DeadlockedOnlineTracker:
             try:
                 # API will return all accounts and their stats when they had a stat change in the past 5 minutes (max 60 minutes ago)
                 recent_stats: list[dict] = await get_recent_stats(self._protocol, self._host, self._token)
-                logger.debug(f"update_live_stats: RECENT STATS: {recent_stats}")
+                logger.debug(f"[dl] update_live_stats: RECENT STATS: {recent_stats}")
 
                 if len(recent_stats) > 0:
                     async with SessionLocalAsync() as session:
@@ -258,10 +281,10 @@ class DeadlockedOnlineTracker:
                                 stats[int(stat_idx)-1] = stat_value
 
                             # Doesn't block the entire backend while updating DB with this players new stats
-                            logger.debug(f"update_live_stats: updating {horizon_account_id}, {stats}")
+                            logger.debug(f"[dl] update_live_stats: updating {horizon_account_id}, {stats}")
                             await update_player_vanilla_stats_async("dl", session, horizon_account_id, stats, self._protocol, self._host, self._horizon_app_id, self._token)
             except Exception as e:
-                logger.error("update_recent_stat_changes failed to update!", exc_info=True)
+                logger.error("[dl] update_recent_stat_changes failed to update!", exc_info=True)
 
             await asyncio.sleep(self._recent_stats_poll_interval)
 

@@ -42,8 +42,9 @@ async def start_background_tasks():
     asyncio.create_task(uya_online_tracker.refresh_token())
     asyncio.create_task(uya_online_tracker.update_recent_stat_changes())
     asyncio.create_task(uya_online_tracker.poll_active_online())
+    asyncio.create_task(uya_online_tracker.update_recent_game_history())
     asyncio.create_task(dl_online_tracker.refresh_token())
-    #asyncio.create_task(dl_online_tracker.update_recent_stat_changes())    # Will work once DL middleware is updated
+    # asyncio.create_task(dl_online_tracker.update_recent_stat_changes())    # Will work once DL middleware is updated
     asyncio.create_task(dl_online_tracker.poll_active_online())
 
 # Add sub-APIs.
@@ -51,7 +52,6 @@ app.include_router(deadlocked_stats_router)
 app.include_router(uya_stats_router)
 app.include_router(deadlocked_online_router)
 app.include_router(uya_online_router)
-
 app.include_router(uya_gamehistory_router)
 
 

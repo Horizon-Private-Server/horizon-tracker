@@ -25,6 +25,7 @@ class UyaGameHistory(Base):
     morph_enabled = Column(Boolean, default=False, nullable=False)
     blitz_enabled = Column(Boolean, default=False, nullable=False)
     rocket_enabled = Column(Boolean, default=False, nullable=False)
+    player_count = Column(Integer, default=0, nullable=False)
 
     game_create_time = Column(DateTime, nullable=False)
     game_start_time = Column(DateTime, nullable=False)
