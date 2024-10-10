@@ -104,6 +104,11 @@ class UyaLiveTracker():
             xmax = 24448
             ymin = 7380
             ymax = 25070
+        else:
+            xmin = 8391
+            xmax = 24448
+            ymin = 7380
+            ymax = 25070
 
         # Convert the coordinates to between 0 and 100
         # Do 100- on y so that it's reversed (canvas in front end expects top left to be 0,0)
