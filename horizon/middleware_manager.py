@@ -89,6 +89,7 @@ class UyaOnlineTracker:
             timelimit = uya_time_parser(game["GenericField3"])
 
             games.append(UyaGameOnlineSchema(
+                id=int(game["GameId"]),
                 name=game["GameName"][0:15].strip(),
                 game_status=game["WorldStatus"],
                 map=map,
