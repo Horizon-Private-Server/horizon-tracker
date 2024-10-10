@@ -298,6 +298,7 @@ class UyaGameOnlineSchema(BaseModel):
     last_updated: str
 
 class UyaGameHistoryEntry(BaseModel):
+    id: int
     status: str
     game_map: str
     game_name: str
@@ -312,6 +313,7 @@ class UyaGameHistoryEntry(BaseModel):
     morph_enabled: bool
     blitz_enabled: bool
     rocket_enabled: bool
+    player_count: int
 
     game_create_time: datetime
     game_start_time: datetime
@@ -358,3 +360,40 @@ class UYALiveGameSession(BaseModel):
     map: str
     name: str
     game_mode: str
+class UyaGameHistoryPlayerStatSchema(BaseModel):
+    game_id: int
+    player_id: int
+    username: str
+
+    win: bool
+    kills: int
+    deaths: int
+    base_dmg: int
+    flag_captures: int
+    flag_saves: int
+    suicides: int
+    nodes: int
+    n60_deaths: int
+    n60_kills: int
+    lava_gun_deaths: int
+    lava_gun_kills: int
+    gravity_bomb_deaths: int
+    gravity_bomb_kills: int
+    flux_rifle_deaths: int
+    flux_rifle_kills: int
+    mine_glove_deaths: int
+    mine_glove_kills: int
+    morph_deaths: int
+    morph_kills: int
+    blitz_deaths: int
+    blitz_kills: int
+    rocket_deaths: int
+    rocket_kills: int
+    wrench_deaths: int
+    wrench_kills: int
+
+
+
+class UyaGameHistoryDetailSchema(BaseModel):
+    game: UyaGameHistoryEntry
+    players: list[UyaGameHistoryPlayerStatSchema]
