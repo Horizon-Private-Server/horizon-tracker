@@ -1,5 +1,6 @@
 import asyncio
 import websockets
+from datetime import datetime
 
 async def read_websocket():
     uri = f"ws://localhost:8000/uya-live-ws"
@@ -8,7 +9,7 @@ async def read_websocket():
             async with websockets.connect(uri,ping_interval=None) as websocket:
                 while True:
                     data = await websocket.recv()
-                    print(data)
+                    print(datetime.now(), data)
         except Exception as e:
             print(f"Unable to connect: {e}")
             await asyncio.sleep(5)

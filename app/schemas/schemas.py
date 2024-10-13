@@ -345,6 +345,7 @@ class UYALivePlayer(BaseModel):
     total_kills: int
     total_deaths: int
     total_suicides: int
+    total_flags: int
 
 class UYALiveGameEvent(BaseModel):
     # Define the structure of any events that might appear in the game
@@ -360,6 +361,8 @@ class UYALiveGameSession(BaseModel):
     map: str
     name: str
     game_mode: str
+
+
 class UyaGameHistoryPlayerStatSchema(BaseModel):
     game_id: int
     player_id: int

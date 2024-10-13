@@ -1,4 +1,5 @@
 import asyncio
+import traceback
 
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
@@ -85,6 +86,7 @@ async def websocket_endpoint(websocket: WebSocket):
         while True:
             await uya_live_tracker.write(websocket)
     except Exception as e:
-        print(f"uya-live-ws Error: {e}")
+        error_type = type(e).__name__  # Get the exception type
+        print(f"uya-live-ws Error: {error_type}")
     finally:
         uya_live_tracker.remove_connection(websocket)

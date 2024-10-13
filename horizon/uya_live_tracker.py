@@ -17,10 +17,13 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 stream_handler.setFormatter(formatter)
 logger.addHandler(stream_handler)
 
+from app.utils.general import read_environment_variables
+
+CREDENTIALS: dict[str, any] = read_environment_variables()
 
 class UyaLiveTracker():
-    def __init__(self, port:int=8888, read_tick_rate:int=5, write_tick_rate:int=5, read_games_api_rate:int=10):
-        self._backend = LiveTrackerBackend(server_ip=os.getenv('SOCKET_IP'), log_level='INFO')
+    def __init__(self, port:int=8888, read_tick_rate:int=10, write_tick_rate:int=10, read_games_api_rate:int=10):
+        self._backend = LiveTrackerBackend(server_ip=CREDENTIALS["uya"]["live_tracker_socket_ip"], log_level='INFO')
         self._ip = '0.0.0.0'
         self._port = port
 
@@ -28,13 +31,15 @@ class UyaLiveTracker():
         self._read_games_api_rate = read_games_api_rate
 
         # Ticks per second
-        self._read_tick_rate = read_tick_rate / 60
-        self._write_tick_rate = write_tick_rate / 60
-
+        self._read_tick_rate = 1 / read_tick_rate
+        self._write_tick_rate = 1 / write_tick_rate
         self._world_state = []
         self._games = dict()
 
         self._active_connections: list[WebSocket] = []
+
+        with open(os.path.join("horizon","parsing","uya_live_map_boundaries.json"), "r") as f:
+            self._transform_coord_map = json.loads(f.read())
 
     def add_connection(self, websocket: WebSocket):
         self._active_connections.append(websocket)
@@ -94,27 +99,13 @@ class UyaLiveTracker():
             await asyncio.sleep(self._read_games_api_rate)
 
     def transform_coord(self, map:str, coord:tuple):
-        if map == 'Bakisi Isles':
-            xmin = 11745
-            xmax = 39504
-            ymin = 13133
-            ymax = 38565
-        elif map == 'Hoven Gorge':
-            xmin = 8391
-            xmax = 24448
-            ymin = 7380
-            ymax = 25070
-        else:
-            xmin = 8391
-            xmax = 24448
-            ymin = 7380
-            ymax = 25070
+        if map not in self._transform_coord_map.keys():
+            return [50,50]
 
-        # Convert the coordinates to between 0 and 100
-        # Do 100- on y so that it's reversed (canvas in front end expects top left to be 0,0)
+        min_maxes:dict = self._transform_coord_map[map]
         new_coord = list(coord)
-        new_coord[0] = ((coord[0] - xmin) / (xmax - xmin)) * 100
-        new_coord[1] = 100 - ((coord[1] - ymin) / (ymax - ymin)) * 100
+        new_coord[0] = ((coord[0] - min_maxes["xmin"]) / (min_maxes["xmax"] - min_maxes["xmin"])) * 100
+        new_coord[1] = 100 - ((coord[1] - min_maxes["ymin"]) / (min_maxes["ymax"] - min_maxes["ymin"])) * 100
 
         return tuple(new_coord)
 
