@@ -26,9 +26,12 @@ CREDENTIALS: dict[str, any] = read_environment_variables()
 
 class UyaLiveTracker():
     def __init__(self, port:int=8888, read_tick_rate:int=10, write_tick_rate:int=10, read_games_api_rate:int=10, write_delay:int=30):
-        self._backend = LiveTrackerBackend(server_ip=CREDENTIALS["uya"]["live_tracker_socket_ip"], log_level='INFO')
+        self._simulated = CREDENTIALS["uya"]["live_tracker_simulated"]
         self._ip = '0.0.0.0'
         self._port = port
+
+        self._backend = LiveTrackerBackend(server_ip=CREDENTIALS["uya"]["live_tracker_socket_ip"], simulated=self._simulated, log_level='INFO')
+
 
         # In seconds
         self._read_games_api_rate = read_games_api_rate
@@ -85,19 +88,18 @@ class UyaLiveTracker():
                 worlds = [UYALiveGameSession(**world) for world in worlds]
                 self._world_state = []
 
-                for world in worlds:
-                    if world.world_id not in self._games.keys():
+                for world in worlds:                    
+                    if not self._simulated and world.world_id not in self._games.keys():
                         continue
-                    game = self._games[world.world_id]
 
-                    world.map = game.map
-                    world.name = game.name
-                    world.game_mode = game.game_mode
+                    if not self._simulated and world.map == 'UNKNOWN': # We didn't get anything from the socket. Use the games api instead
+                        game = self._games[world.world_id]
+                        world.map = game.map
+                        world.name = game.name
+                        world.game_mode = game.game_mode
 
                     world_players = list(sorted(world.players, key=lambda player: player.player_id))
-                    game_players = game.players
-                    for idx in range(min(len(world_players), len(game_players))):
-                        #world_players[idx].username = world_players[idx].username
+                    for idx in range(len(world_players)):
                         world_players[idx].coord = self.transform_coord(world.map, world_players[idx].coord)
                     world.players = world_players
 
