@@ -2,6 +2,9 @@ import os
 import logging
 import asyncio
 import json
+from collections import deque
+from datetime import datetime, timedelta
+from copy import deepcopy
 
 from livetrackerbackend import LiveTrackerBackend
 from fastapi import WebSocket
@@ -22,7 +25,7 @@ from app.utils.general import read_environment_variables
 CREDENTIALS: dict[str, any] = read_environment_variables()
 
 class UyaLiveTracker():
-    def __init__(self, port:int=8888, read_tick_rate:int=10, write_tick_rate:int=10, read_games_api_rate:int=10):
+    def __init__(self, port:int=8888, read_tick_rate:int=10, write_tick_rate:int=10, read_games_api_rate:int=10, write_delay:int=30):
         self._backend = LiveTrackerBackend(server_ip=CREDENTIALS["uya"]["live_tracker_socket_ip"], log_level='INFO')
         self._ip = '0.0.0.0'
         self._port = port
@@ -34,9 +37,13 @@ class UyaLiveTracker():
         self._read_tick_rate = 1 / read_tick_rate
         self._write_tick_rate = 1 / write_tick_rate
         self._world_state = []
+        self._world_state_history = deque(maxlen=350) # For automatic popping so we don't need to remove. Prevents memory leaks too
         self._games = dict()
 
         self._active_connections: list[WebSocket] = []
+
+        # Delay in seconds for writing to the websocket to prevent cheating
+        self._write_delay = write_delay
 
         with open(os.path.join("horizon","parsing","uya_live_map_boundaries.json"), "r") as f:
             self._transform_coord_map = json.loads(f.read())
@@ -48,7 +55,19 @@ class UyaLiveTracker():
         self._active_connections.remove(websocket)
 
     async def write(self, websocket: WebSocket):
-        data = json.dumps([world_state.dict() for world_state in self._world_state])
+        """Return the world state from _delay_ seconds ago, if available."""
+        current_time = datetime.now()
+        delay_threshold = current_time - timedelta(seconds=self._write_delay)
+        
+        worlds = []
+        # Check the deque for the most recent state that is exactly write_delay seconds old or newer
+        # Will almost always be the first in the deque (good performance)
+        for ts, state in self._world_state_history:
+            if ts <= delay_threshold:
+                worlds = state
+                break
+
+        data = json.dumps([world_state.dict() for world_state in worlds])
         await websocket.send_text(data)
         await asyncio.sleep(self._write_tick_rate)
 
@@ -84,6 +103,8 @@ class UyaLiveTracker():
 
                     self._world_state.append(world)
 
+                self._world_state_history.append((datetime.now(), deepcopy(self._world_state)))
+            
             except Exception as e:
                 logger.error("read_prod_socket failed to update!", exc_info=True)
 
