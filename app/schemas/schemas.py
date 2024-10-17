@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
+from typing import Optional
 
 class Pagination[T](BaseModel):
     count: int
@@ -285,6 +286,7 @@ class DeadlockedGameOnlineSchema(BaseModel):
     last_updated: str
 
 class UyaGameOnlineSchema(BaseModel):
+    id: int
     name: str
     game_status: str
     time_started: str
@@ -317,6 +319,49 @@ class UyaGameHistoryEntry(BaseModel):
     game_start_time: datetime
     game_end_time: datetime
     game_duration: float
+
+class UYALivePlayerUpgrade(BaseModel):
+    upgrade: str
+    kills: int
+
+
+class UYALivePlayerUpgrades(BaseModel):
+    flux: UYALivePlayerUpgrade
+    blitz: UYALivePlayerUpgrade
+    grav: UYALivePlayerUpgrade
+
+
+class UYALivePlayer(BaseModel):
+    player_id: int
+    account_id: int
+    team: str
+    username: str
+    coord: tuple[float, float, float]
+    cam_x: int
+    weapon: Optional[str] = None
+    upgrades: UYALivePlayerUpgrades
+    flag: Optional[str] = None
+    health: int
+    total_kills: int
+    total_deaths: int
+    total_suicides: int
+    total_flags: int
+
+class UYALiveGameEvent(BaseModel):
+    # Define the structure of any events that might appear in the game
+    # Placeholder for now as the events array in the provided JSON is empty
+    pass
+
+
+class UYALiveGameSession(BaseModel):
+    world_id: int
+    world_latest_update: str
+    players: list[UYALivePlayer]
+    events: list[UYALiveGameEvent]
+    map: str
+    name: str
+    game_mode: str
+
 
 class UyaGameHistoryPlayerStatSchema(BaseModel):
     game_id: int

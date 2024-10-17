@@ -275,3 +275,40 @@ alembic upgrade <revision_id>
 ### Migrating the Database Version
 
 TBD
+
+
+### Docker Compose
+Docker setup
+
+First set up your `env.json` file with the correct setup.
+
+
+Initialization:
+1. Install Docker
+2. Edit the environment variables on your machine to add the following:
+```
+SOCKET_IP=PRODUCTION_UYA_SERVER_IP
+TRACKER_POSTGRES_USER=YOURPOSTGRES_USER_IN_ENVJSON
+TRACKER_POSTGRES_PASSWORD=YOURPOSTGRES_PW_IN_ENVJSON
+TRACKER_POSTGRES_DB=YOURPOSTGRES_DB_IN_ENVJSON
+```
+3. Run:
+```
+docker compose up --build 
+```
+
+Fill up db with data (you may need to pip install some things, and may need to install postgres driver locally). Run these commands on a local python terminal (not docker):
+1. Pull stats from production to local
+```
+python -m scripts.pull_stats
+```
+2. Ingest the downloaded JSON files into the db:
+```
+python -m scripts.dataloader
+```
+
+If you want to test the live websocket:
+```
+cd scripts
+python test_websocket.py
+```
