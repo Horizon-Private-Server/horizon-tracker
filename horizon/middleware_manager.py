@@ -81,7 +81,7 @@ class UyaOnlineTracker:
 
         # Process each game
         for game in self._games_online:
-            game_metadata = json.loads(game["Metadata"]) if game["Metadata"] else {}
+            game_metadata = json.loads(game["Metadata"]) if "Metadata" in game.keys() and game["Metadata"] else {}
             game_players = list(filter(lambda _player: _player["GameId"] is not None and _player["GameId"] == game["GameId"], self._players_online))
 
             if "CustomMap" in game_metadata.keys() and game_metadata["CustomMap"] != None:
