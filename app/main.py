@@ -52,7 +52,6 @@ async def start_background_tasks():
     # asyncio.create_task(dl_online_tracker.update_recent_stat_changes())    # Will work once DL middleware is updated
     asyncio.create_task(dl_online_tracker.poll_active_online())
 
-
 # Add sub-APIs.
 app.include_router(deadlocked_stats_router)
 app.include_router(uya_stats_router)
@@ -88,5 +87,6 @@ async def websocket_endpoint(websocket: WebSocket):
     except Exception as e:
         error_type = type(e).__name__  # Get the exception type
         print(f"uya-live-ws Error: {error_type}")
+        traceback.print_exc()  # This will print the stack trace
     finally:
         uya_live_tracker.remove_connection(websocket)

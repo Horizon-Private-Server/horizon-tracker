@@ -324,7 +324,7 @@ async def update_uya_gamehistory_async(
 
     if "Metadata" not in game.keys() or game["Metadata"] == None or game["Metadata"] == {}:
         game["Metadata"] = {}
-    else:
+    elif type(game["Metadata"]) == str:
         game["Metadata"] = json.loads(game["Metadata"])
 
     # Get player count

@@ -87,7 +87,7 @@ class UyaOnlineTracker:
             if "CustomMap" in game_metadata.keys() and game_metadata["CustomMap"] != None:
                 map = game_metadata["CustomMap"]
             else:
-                map = uya_map_parser(game["GenericField3"], json.loads(game["Metadata"]))
+                map = uya_map_parser(game["GenericField3"], game_metadata)
 
             game_mode, game_type = uya_gamemode_parser(game["GenericField3"])
 

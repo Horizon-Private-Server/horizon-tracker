@@ -5,8 +5,8 @@ import json
 from collections import deque
 from datetime import datetime, timedelta
 from copy import deepcopy
+import websockets
 
-from livetrackerbackend import LiveTrackerBackend
 from fastapi import WebSocket
 
 from horizon.middleware_manager import uya_online_tracker
@@ -30,8 +30,7 @@ class UyaLiveTracker():
         self._ip = '0.0.0.0'
         self._port = port
 
-        self._backend = LiveTrackerBackend(server_ip=CREDENTIALS["uya"]["live_tracker_socket_ip"], simulated=self._simulated, log_level='INFO')
-
+        self._prod_uri = f"ws://{CREDENTIALS["uya"]["live_tracker_socket_ip"]}:{port}"
 
         # In seconds
         self._read_games_api_rate = read_games_api_rate
@@ -39,9 +38,7 @@ class UyaLiveTracker():
         # Ticks per second
         self._read_tick_rate = 1 / read_tick_rate
         self._write_tick_rate = 1 / write_tick_rate
-        self._world_state = []
-        self._world_state_history = deque(maxlen=350) # For automatic popping so we don't need to remove. Prevents memory leaks too
-        self._games = dict()
+        self._worlds = []
 
         self._active_connections: list[WebSocket] = []
 
@@ -51,6 +48,20 @@ class UyaLiveTracker():
         with open(os.path.join("horizon","parsing","uya_live_map_boundaries.json"), "r") as f:
             self._transform_coord_map = json.loads(f.read())
 
+
+    ####### READ FROM PROD METHODS
+    async def read_prod_websocket(self):
+        while True:
+            try:
+                async with websockets.connect(self._prod_uri,ping_interval=None) as websocket:
+                    while True:
+                        data = await websocket.recv()
+                        self._worlds = [UYALiveGameSession(**world) for world in json.loads(data)]
+            except Exception as e:
+                logger.warning(f"read_prod_websocket: Unable to connect", exc_info=True)
+                await asyncio.sleep(5)
+
+    ####### PUSHING TO CLIENTS METHODS
     def add_connection(self, websocket: WebSocket):
         self._active_connections.append(websocket)
 
@@ -59,58 +70,13 @@ class UyaLiveTracker():
 
     async def write(self, websocket: WebSocket):
         """Return the world state from _delay_ seconds ago, if available."""
-        current_time = datetime.now()
-        delay_threshold = current_time - timedelta(seconds=self._write_delay)
-        
-        worlds = []
-        # Check the deque for the most recent state that is exactly write_delay seconds old or newer
-        # Will almost always be the first in the deque (good performance)
-        for ts, state in self._world_state_history:
-            if ts <= delay_threshold:
-                worlds = state
-                break
-
-        data = json.dumps([world_state.dict() for world_state in worlds])
+        data = json.dumps([world_state.dict() for world_state in self._worlds])
         await websocket.send_text(data)
         await asyncio.sleep(self._write_tick_rate)
 
     async def start(self, loop):
-        # Read from the prod uya live socket
-        self._backend.start(loop)
-
-        loop.create_task(self.read_prod_socket())
+        loop.create_task(self.read_prod_websocket())
         loop.create_task(self.read_games_api())
-
-    async def read_prod_socket(self):
-        while True:
-            try:
-                worlds:list[dict] = self._backend.get_world_states()
-                worlds = [UYALiveGameSession(**world) for world in worlds]
-                self._world_state = []
-
-                for world in worlds:                    
-                    if not self._simulated and world.world_id not in self._games.keys():
-                        continue
-
-                    if not self._simulated and world.map == 'UNKNOWN': # We didn't get anything from the socket. Use the games api instead
-                        game = self._games[world.world_id]
-                        world.map = game.map
-                        world.name = game.name
-                        world.game_mode = game.game_mode
-
-                    world_players = list(sorted(world.players, key=lambda player: player.player_id))
-                    for idx in range(len(world_players)):
-                        world_players[idx].coord = self.transform_coord(world.map, world_players[idx].coord)
-                    world.players = world_players
-
-                    self._world_state.append(world)
-
-                self._world_state_history.append((datetime.now(), deepcopy(self._world_state)))
-            
-            except Exception as e:
-                logger.error("read_prod_socket failed to update!", exc_info=True)
-
-            await asyncio.sleep(self._read_tick_rate)
 
     async def read_games_api(self):
         while True:
