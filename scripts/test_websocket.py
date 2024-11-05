@@ -3,7 +3,7 @@ import websockets
 from datetime import datetime
 
 async def read_websocket():
-    uri = f"ws://localhost:8000/uya-live-ws"
+    uri = f"ws://localhost:8000/ws/uya-live"
     while True:
         try:
             async with websockets.connect(uri,ping_interval=None) as websocket:

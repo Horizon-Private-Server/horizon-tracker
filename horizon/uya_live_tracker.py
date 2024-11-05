@@ -24,8 +24,9 @@ from app.utils.general import read_environment_variables
 
 CREDENTIALS: dict[str, any] = read_environment_variables()
 
-class UyaLiveTracker():
-    def __init__(self, port:int=8888, read_tick_rate:int=10, write_tick_rate:int=10, read_games_api_rate:int=10, write_delay:int=30):
+
+class UyaLiveTracker:
+    def __init__(self, port: int = 8888, read_tick_rate: int = 10, write_tick_rate: int = 10, read_games_api_rate: int = 10, write_delay: int = 30):
         self._simulated = CREDENTIALS["uya"]["live_tracker_simulated"]
         self._ip = '0.0.0.0'
         self._port = port
@@ -45,15 +46,14 @@ class UyaLiveTracker():
         # Delay in seconds for writing to the websocket to prevent cheating
         self._write_delay = write_delay
 
-        with open(os.path.join("horizon","parsing","uya_live_map_boundaries.json"), "r") as f:
+        with open(os.path.join("horizon", "parsing", "uya_live_map_boundaries.json"), "r") as f:
             self._transform_coord_map = json.loads(f.read())
-
 
     ####### READ FROM PROD METHODS
     async def read_prod_websocket(self):
         while True:
             try:
-                async with websockets.connect(self._prod_uri,ping_interval=None) as websocket:
+                async with websockets.connect(self._prod_uri, ping_interval=None) as websocket:
                     while True:
                         data = await websocket.recv()
                         self._worlds = [UYALiveGameSession(**world) for world in json.loads(data)]
@@ -82,20 +82,21 @@ class UyaLiveTracker():
         while True:
             try:
                 games = uya_online_tracker.get_games()
-                self._games = {game.id-1: game for game in games}
+                self._games = {game.id - 1: game for game in games}
             except Exception as e:
                 logger.error("read_games_api failed to update!", exc_info=True)
             await asyncio.sleep(self._read_games_api_rate)
 
-    def transform_coord(self, map:str, coord:tuple):
+    def transform_coord(self, map: str, coord: tuple):
         if map not in self._transform_coord_map.keys():
-            return [50,50]
+            return [50, 50]
 
-        min_maxes:dict = self._transform_coord_map[map]
+        min_maxes: dict = self._transform_coord_map[map]
         new_coord = list(coord)
         new_coord[0] = ((coord[0] - min_maxes["xmin"]) / (min_maxes["xmax"] - min_maxes["xmin"])) * 100
         new_coord[1] = 100 - ((coord[1] - min_maxes["ymin"]) / (min_maxes["ymax"] - min_maxes["ymin"])) * 100
 
         return tuple(new_coord)
 
-uya_live_tracker = UyaLiveTracker()
+
+uya_live_tracker: UyaLiveTracker = UyaLiveTracker()

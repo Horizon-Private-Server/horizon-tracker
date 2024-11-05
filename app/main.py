@@ -77,7 +77,7 @@ async def root():
     return {"message": "Hello World"}
 
 
-@app.websocket("/uya-live-ws")
+@app.websocket("/ws/uya-live")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     uya_live_tracker.add_connection(websocket)
