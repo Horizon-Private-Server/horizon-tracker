@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import column
+from sqlalchemy import column, func
 
 from sqlalchemy.orm import Session, Query, DeclarativeBase
 
@@ -27,7 +27,9 @@ from app.schemas.schemas import (
     DeadlockedGungameStatsSchema,
     DeadlockedInfiniteClimberStatsSchema,
     DeadlockedSurvivalStatsSchema,
-    DeadlockedTrainingStatsSchema, DeadlockedSurvivalMapStatsSchema
+    DeadlockedTrainingStatsSchema,
+    DeadlockedSurvivalMapStatsSchema,
+    PlayerSchema
 )
 from app.utils.query_helpers import get_stat_domains, get_available_stats_for_domain, dl_compute_stat_offerings
 
@@ -159,4 +161,34 @@ def deadlocked_player(id: int, session: Session = Depends(get_db)) -> Deadlocked
             for stat_schema_key
             in stat_schema_dictionary
         }
+    )
+
+
+@router.get("/search")
+def player_search(q: str, page: int = 1, session: Session = Depends(get_db)) -> Pagination[PlayerSchema]:
+    """
+    Generate a paginated player lookup (100 entries per page) for all Deadlocked players. `q` is a query
+    to look up a player by username. `page` is the page lookup page. Each page consists of 100 entries.
+    """
+
+    if page < 1:
+        page = 0
+    else:
+        page -= 1
+
+    query: Query = session.query(
+        DeadlockedPlayer).filter(DeadlockedPlayer.username.ilike(f"%{q}%") | (func.lower(DeadlockedPlayer.username) == q.lower())
+    ).order_by(DeadlockedPlayer.username.asc())
+
+    count = query.count()
+
+    results: list[PlayerSchema] = list(query.offset(page * 100).limit(100))
+
+    return Pagination[PlayerSchema](
+        count=count,
+        results=[
+            PlayerSchema(id=player.id, username=player.username)
+            for player
+            in results
+        ]
     )

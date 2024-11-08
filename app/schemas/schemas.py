@@ -185,10 +185,12 @@ class DeadlockedTrainingStatsSchema(BaseModel):
     cycle_fusion_accuracy: int
 
 
-class DeadlockedPlayerDetailsSchema(BaseModel):
-
+class PlayerSchema(BaseModel):
     id: int
     username: str
+
+
+class DeadlockedPlayerDetailsSchema(PlayerSchema):
 
     overall_stats: DeadlockedOverallStatsSchema
     deathmatch_stats: DeadlockedDeathmatchStatsSchema
@@ -261,10 +263,7 @@ class UyaCTFStatsSchema(UyaStatsBase):
     avg_flag_captures: int
     avg_flag_saves: int
 
-class UyaPlayerDetailsSchema(BaseModel):
-
-    id: int
-    username: str
+class UyaPlayerDetailsSchema(PlayerSchema):
 
     overall_stats: UyaOverallStatsSchema
     deathmatch_stats: UyaDeathmatchStatsSchema
@@ -346,6 +345,7 @@ class UYALivePlayer(BaseModel):
     total_deaths: int
     total_suicides: int
     total_flags: int
+
 
 class UYALiveGameEvent(BaseModel):
     # Define the structure of any events that might appear in the game

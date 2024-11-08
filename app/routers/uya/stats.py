@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import column
+from sqlalchemy import column, func
 
 from sqlalchemy.orm import Session, Query, DeclarativeBase
 
@@ -15,7 +15,8 @@ from app.schemas.schemas import (
     UyaDeathmatchStatsSchema,
     UyaOverallStatsSchema,
     UyaCTFStatsSchema,
-    UyaPlayerDetailsSchema
+    UyaPlayerDetailsSchema,
+    PlayerSchema
 )
 from app.utils.query_helpers import get_stat_domains, get_available_stats_for_domain, uya_compute_stat_offerings
 
@@ -130,4 +131,34 @@ def uya_player(id: int, session: Session = Depends(get_db)) -> UyaPlayerDetailsS
             for stat_schema_key
             in stat_schema_dictionary
         }
+    )
+
+
+@router.get("/search")
+def player_search(q: str, page: int = 1, session: Session = Depends(get_db)) -> Pagination[PlayerSchema]:
+    """
+    Generate a paginated player lookup (100 entries per page) for all UYA players. `q` is a query
+    to look up a player by username. `page` is the page lookup page. Each page consists of 100 entries.
+    """
+
+    if page < 1:
+        page = 0
+    else:
+        page -= 1
+
+    query: Query = session.query(
+        UyaPlayer).filter(UyaPlayer.username.ilike(f"%{q}%") | (func.lower(UyaPlayer.username) == q.lower())
+    ).order_by(UyaPlayer.username.asc())
+
+    count = query.count()
+
+    results: list[PlayerSchema] = list(query.offset(page * 100).limit(100))
+
+    return Pagination[PlayerSchema](
+        count=count,
+        results=[
+            PlayerSchema(id=player.id, username=player.username)
+            for player
+            in results
+        ]
     )
