@@ -1,3 +1,4 @@
+from cachetools import cached, TTLCache
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import column, func
@@ -19,6 +20,9 @@ from app.schemas.schemas import (
     PlayerSchema
 )
 from app.utils.query_helpers import get_stat_domains, get_available_stats_for_domain, uya_compute_stat_offerings
+
+from fuzzywuzzy import fuzz
+
 
 router = APIRouter(prefix="/api/uya/stats", tags=["uya-stats"])
 
@@ -134,31 +138,43 @@ def uya_player(id: int, session: Session = Depends(get_db)) -> UyaPlayerDetailsS
     )
 
 
+@cached(cache=TTLCache(maxsize=5, ttl=3600), key=lambda _: 0)
+def get_all_uya_players(session: Session) -> list[PlayerSchema]:
+    return [
+        PlayerSchema(id=result.id, username=result.username)
+        for result
+        in session.query(UyaPlayer).with_entities(UyaPlayer.id, UyaPlayer.username)
+    ]
+
 @router.get("/search")
-def player_search(q: str, page: int = 1, session: Session = Depends(get_db)) -> Pagination[PlayerSchema]:
+def player_search(q: str, page: int, session: Session = Depends(get_db)) -> Pagination[PlayerSchema]:
     """
-    Generate a paginated player lookup (100 entries per page) for all UYA players. `q` is a query
+    Generate a paginated player lookup (100 entries per page) for all Deadlocked players. `q` is a query
     to look up a player by username. `page` is the page lookup page. Each page consists of 100 entries.
     """
+
+    if q.strip() == "":
+        return Pagination[PlayerSchema](count=0, results=[])
+
+    # Deadlocked and UYA accounts have a max length of 16. Since Levenshtein distance has performance impacts
+    # with increased string lengths, truncate excess characters. This will prevent potential DOS attacks using
+    # long query strings to overload compute performance.
+    q = q[:16]
 
     if page < 1:
         page = 0
     else:
         page -= 1
 
-    query: Query = session.query(
-        UyaPlayer).filter(UyaPlayer.username.ilike(f"%{q}%") | (func.lower(UyaPlayer.username) == q.lower())
-    ).order_by(UyaPlayer.username.asc())
+    all_players: list[PlayerSchema] = get_all_uya_players(session)
 
-    count = query.count()
-
-    results: list[PlayerSchema] = list(query.offset(page * 100).limit(100))
+    results: list[PlayerSchema] = list(sorted(all_players, key=lambda result: fuzz.ratio(result.username.lower(), q.lower()), reverse=True))
 
     return Pagination[PlayerSchema](
-        count=count,
+        count=len(results),
         results=[
             PlayerSchema(id=player.id, username=player.username)
             for player
-            in results
+            in results[page * 100: (page + 1) * 100]
         ]
     )

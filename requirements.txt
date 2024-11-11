@@ -11,4 +11,5 @@ requests
 urllib3
 aiohttp
 asyncpg
-websockets
+websockefuzzywuzzy
+cachetools
