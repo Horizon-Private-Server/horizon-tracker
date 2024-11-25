@@ -246,6 +246,8 @@ def update_uya_gamehistory(
         for horizon_player_id in players_pre:
             stat_difference:list = [post_stat - pre_stat for post_stat, pre_stat in zip(game["Metadata"]["PostWideStats"]["Players"][horizon_player_id], game["Metadata"]["PreWideStats"]["Players"][horizon_player_id])]
 
+            if stat_difference == []:
+                continue
             # Convert stat difference to string key
             player_cleaned_stats:dict[str, int] = {uya_vanilla_stats_map[key]['label']: value for key, value in zip(uya_vanilla_stats_map.keys(), stat_difference) if uya_vanilla_stats_map[key]["label"]}
 
