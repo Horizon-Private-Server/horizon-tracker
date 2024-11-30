@@ -81,19 +81,20 @@ class UyaOnlineTracker:
 
         # Process each game
         for game in self._games_online:
-            game_metadata = json.loads(game["Metadata"]) if game["Metadata"] else None
+            game_metadata = json.loads(game["Metadata"]) if "Metadata" in game.keys() and game["Metadata"] else {}
             game_players = list(filter(lambda _player: _player["GameId"] is not None and _player["GameId"] == game["GameId"], self._players_online))
 
-            if game_metadata is not None and game_metadata["CustomMap"] is not None:
+            if "CustomMap" in game_metadata.keys() and game_metadata["CustomMap"] != None:
                 map = game_metadata["CustomMap"]
             else:
-                map = uya_map_parser(game["GenericField3"], json.loads(game["Metadata"]))
+                map = uya_map_parser(game["GenericField3"], game_metadata)
 
             game_mode, game_type = uya_gamemode_parser(game["GenericField3"])
 
             timelimit = uya_time_parser(game["GenericField3"])
 
             games.append(UyaGameOnlineSchema(
+                id=int(game["GameId"]),
                 name=game["GameName"][0:15].strip(),
                 game_status=game["WorldStatus"],
                 map=map,
@@ -141,7 +142,7 @@ class UyaOnlineTracker:
             try:
                 # API will return all accounts and their stats when they had a stat change in the past 5 minutes (max 60 minutes ago)
                 recent_stats: list[dict] = await get_recent_stats(self._protocol, self._host, self._token)
-                logger.debug(f"[uya] update_live_stats: RECENT STATS: {recent_stats}")
+                #logger.debug(f"[uya] update_live_stats: RECENT STATS: {recent_stats}")
 
                 if len(recent_stats) > 0:
                     async with SessionLocalAsync() as session:
@@ -169,10 +170,11 @@ class UyaOnlineTracker:
             try:
                 # API will return all accounts and games that are recently ended
                 recent_games: list[dict] = await get_recent_game_history(self._protocol, self._host, self._token, self._horizon_app_id)
-                logger.debug(f"[uya] update_live_stats: RECENT GAMES: {recent_games}")
+                #logger.debug(f"[uya] update_live_stats: RECENT GAMES: {recent_games}")
                 if len(recent_games) > 0:
                     async with SessionLocalAsync() as session:
                         for recent_game in recent_games:
+                            logger.debug(f"[uya] update_recent_game_history: updating {recent_game}")
                             await update_uya_gamehistory_async(deepcopy(recent_game), session)
             except Exception as e:
                 logger.error("[uya] update_recent_game_history failed to update!", exc_info=True)
@@ -267,7 +269,7 @@ class DeadlockedOnlineTracker:
             try:
                 # API will return all accounts and their stats when they had a stat change in the past 5 minutes (max 60 minutes ago)
                 recent_stats: list[dict] = await get_recent_stats(self._protocol, self._host, self._token)
-                logger.debug(f"[dl] update_live_stats: RECENT STATS: {recent_stats}")
+                #logger.debug(f"[dl] update_live_stats: RECENT STATS: {recent_stats}")
 
                 if len(recent_stats) > 0:
                     async with SessionLocalAsync() as session:

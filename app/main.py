@@ -1,6 +1,7 @@
 import asyncio
+import traceback
 
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import SessionLocal
@@ -16,6 +17,8 @@ from app.routers.uya.game_history import router as uya_gamehistory_router
 
 from horizon.middleware_manager import uya_online_tracker
 from horizon.middleware_manager import dl_online_tracker
+
+from horizon.uya_live_tracker import uya_live_tracker
 
 
 ALLOWED_ORIGINS: list[str] = [
@@ -39,6 +42,8 @@ app.add_middleware(
 # Add background tasks
 @app.on_event("startup")
 async def start_background_tasks():
+    await uya_live_tracker.start(asyncio.get_event_loop())
+
     asyncio.create_task(uya_online_tracker.refresh_token())
     asyncio.create_task(uya_online_tracker.update_recent_stat_changes())
     asyncio.create_task(uya_online_tracker.poll_active_online())
@@ -71,3 +76,17 @@ async def root():
     """
     return {"message": "Hello World"}
 
+
+@app.websocket("/ws/uya-live")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    uya_live_tracker.add_connection(websocket)
+    try:
+        while True:
+            await uya_live_tracker.write(websocket)
+    except Exception as e:
+        error_type = type(e).__name__  # Get the exception type
+        print(f"uya-live-ws Error: {error_type}")
+        traceback.print_exc()  # This will print the stack trace
+    finally:
+        uya_live_tracker.remove_connection(websocket)

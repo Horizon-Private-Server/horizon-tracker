@@ -7,6 +7,9 @@ from sqlalchemy.orm import Session, Query, DeclarativeBase
 from app.database import SessionLocal
 from app.models.dl import DeadlockedPlayer
 
+from fuzzywuzzy import fuzz
+from cachetools import cached, TTLCache
+
 from app.schemas.schemas import (
     Pagination,
     LeaderboardEntry,
@@ -27,9 +30,12 @@ from app.schemas.schemas import (
     DeadlockedGungameStatsSchema,
     DeadlockedInfiniteClimberStatsSchema,
     DeadlockedSurvivalStatsSchema,
-    DeadlockedTrainingStatsSchema, DeadlockedSurvivalMapStatsSchema
+    DeadlockedTrainingStatsSchema,
+    DeadlockedSurvivalMapStatsSchema,
+    PlayerSchema
 )
 from app.utils.query_helpers import get_stat_domains, get_available_stats_for_domain, dl_compute_stat_offerings
+
 
 router = APIRouter(prefix="/api/dl/stats", tags=["deadlocked-stats"])
 
@@ -99,6 +105,7 @@ def deadlocked_leaderboard(domain: str, stat: str, page: int = 1, session: Sessi
         ]
     )
 
+
 @router.get("/player/{id}")
 def deadlocked_player(id: int, session: Session = Depends(get_db)) -> DeadlockedPlayerDetailsSchema:
     """
@@ -159,4 +166,46 @@ def deadlocked_player(id: int, session: Session = Depends(get_db)) -> Deadlocked
             for stat_schema_key
             in stat_schema_dictionary
         }
+    )
+
+
+@cached(cache=TTLCache(maxsize=5, ttl=3600), key=lambda _: 0)
+def get_all_dl_players(session: Session) -> list[PlayerSchema]:
+    return [
+        PlayerSchema(id=result.id, username=result.username)
+        for result
+        in session.query(DeadlockedPlayer).with_entities(DeadlockedPlayer.id, DeadlockedPlayer.username)
+    ]
+
+@router.get("/search")
+def player_search(q: str, page: int, session: Session = Depends(get_db)) -> Pagination[PlayerSchema]:
+    """
+    Generate a paginated player lookup (100 entries per page) for all Deadlocked players. `q` is a query
+    to look up a player by username. `page` is the page lookup page. Each page consists of 100 entries.
+    """
+
+    if q.strip() == "":
+        return Pagination[PlayerSchema](count=0, results=[])
+
+    # Deadlocked and UYA accounts have a max length of 16. Since Levenshtein distance has performance impacts
+    # with increased string lengths, truncate excess characters. This will prevent potential DOS attacks using
+    # long query strings to overload compute performance.
+    q = q[:16]
+
+    if page < 1:
+        page = 0
+    else:
+        page -= 1
+
+    all_players: list[PlayerSchema] = get_all_dl_players(session)
+
+    results: list[PlayerSchema] = list(sorted(all_players, key=lambda result: fuzz.ratio(result.username.lower(), q.lower()), reverse=True))
+
+    return Pagination[PlayerSchema](
+        count=len(results),
+        results=[
+            PlayerSchema(id=player.id, username=player.username)
+            for player
+            in results[page * 100: (page + 1) * 100]
+        ]
     )

@@ -7,6 +7,9 @@ services:
     container_name: fastapi_app
     ports:
       - "8000:8000"
+      - "8888:8888"
+    environment:
+      SOCKET_IP: ${SOCKET_IP}
     depends_on:
       db:
         condition: service_healthy  # FastAPI waits until PostgreSQL is healthy

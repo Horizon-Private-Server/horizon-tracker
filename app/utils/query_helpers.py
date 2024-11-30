@@ -129,7 +129,7 @@ async def update_player_vanilla_stats_async(
         relationship_attribute = getattr(player_class, rel.key)
         options.append(selectinload(relationship_attribute))
 
-    logger.debug(f"update_player_vanilla_stats_async: {player_id} Got options: {options}")
+    #logger.debug(f"update_player_vanilla_stats_async: {player_id} Got options: {options}")
     # Create a select statement with the filter condition
     stmt = select(player_class).options(*options).filter_by(id=int(player_id))
     # Execute the statement asynchronously
@@ -137,7 +137,7 @@ async def update_player_vanilla_stats_async(
     # Fetch the first result
     player = result.scalars().first()
 
-    logger.debug(f"update_player_vanilla_stats_async: Got player: {player}")
+    #logger.debug(f"update_player_vanilla_stats_async: Got player: {player}")
 
     if player is None: # Player doesn't exist in db. Add it
         player_info: dict = await get_account_basic_stats_async(protocol, host, player_id, app_id, token)
@@ -155,7 +155,7 @@ async def update_player_vanilla_stats_async(
         # TODO This has a lot of code smell, but it's a simple way to ensure the existence of 1-1 tables.
         await update_player_vanilla_stats_async(game, session, player_id, wide_stats, protocol, host, app_id, token)
     else: # Player exists in DB. Update stats
-        logger.debug(f"update_player_vanilla_stats_async: User exists: {player_id}")
+        #logger.debug(f"update_player_vanilla_stats_async: User exists: {player_id}")
         for index, stat in enumerate(wide_stats):
 
             if stats_map[index]["table"] == "" or stats_map[index]["field"] == "":
@@ -246,6 +246,8 @@ def update_uya_gamehistory(
         for horizon_player_id in players_pre:
             stat_difference:list = [post_stat - pre_stat for post_stat, pre_stat in zip(game["Metadata"]["PostWideStats"]["Players"][horizon_player_id], game["Metadata"]["PreWideStats"]["Players"][horizon_player_id])]
 
+            if stat_difference == []:
+                continue
             # Convert stat difference to string key
             player_cleaned_stats:dict[str, int] = {uya_vanilla_stats_map[key]['label']: value for key, value in zip(uya_vanilla_stats_map.keys(), stat_difference) if uya_vanilla_stats_map[key]["label"]}
 
@@ -322,9 +324,9 @@ async def update_uya_gamehistory_async(
     session: Session
 ) -> None:
 
-    if "Metadata" not in game.keys() or game["Metadata"] == None:
+    if "Metadata" not in game.keys() or game["Metadata"] == None or game["Metadata"] == {}:
         game["Metadata"] = {}
-    else:
+    elif type(game["Metadata"]) == str:
         game["Metadata"] = json.loads(game["Metadata"])
 
     # Get player count
@@ -379,7 +381,8 @@ async def update_uya_gamehistory_async(
         await session.flush()
         await session.commit()
     else: # Update rows
-        logger.debug(f"update_uya_gamehistory_async: Already have this game: {int(game["Id"])}")
+        pass
+        #logger.debug(f"update_uya_gamehistory_async: Already have this game: {int(game["Id"])}")
 
 
     # Need to add these to options to prevent lazy loading which fails with async
