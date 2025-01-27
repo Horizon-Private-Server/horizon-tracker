@@ -168,6 +168,35 @@ async def update_player_vanilla_stats_async(
         await session.commit()
 
 
+@retry_async(retries=3, delay=2)
+async def get_uya_player_name_async(
+    player_id: int | str,
+    session: Session,
+) -> None:
+    # Need to add these to options to prevent lazy loading which fails with async
+    mapper = inspect(UyaPlayer)
+    options = []
+
+    # Dynamically add selectinload for each relationship
+    for rel in mapper.relationships:
+        relationship_attribute = getattr(UyaPlayer, rel.key)
+        options.append(selectinload(relationship_attribute))
+
+    #logger.debug(f"update_player_vanilla_stats_async: {player_id} Got options: {options}")
+    # Create a select statement with the filter condition
+    stmt = select(UyaPlayer).options(*options).filter_by(id=int(player_id))
+    # Execute the statement asynchronously
+    result = await session.execute(stmt)
+    # Fetch the first result
+    player = result.scalars().first()
+
+    if player:
+        return player.username
+    else:
+        return 'UNKNOWN'
+
+
+
 
 def update_uya_gamehistory(
     game: dict,
@@ -315,6 +344,65 @@ def update_uya_gamehistory(
 
     # Commit the changes
     session.commit()
+
+
+@retry_async(retries=3, delay=2)
+async def get_uya_gamehistory_and_player_stats_async(
+    game: dict,
+    session: Session
+) -> None:
+    # Need to add these to options to prevent lazy loading which fails with async
+    mapper = inspect(UyaGameHistory)
+    options = []
+
+    # Dynamically add selectinload for each relationship
+    for rel in mapper.relationships:
+        relationship_attribute = getattr(UyaGameHistory, rel.key)
+        options.append(selectinload(relationship_attribute))
+
+    #logger.debug(f"update_player_vanilla_stats_async: {player_id} Got options: {options}")
+    # Create a select statement with the filter condition
+    stmt = select(UyaGameHistory).options(*options).filter_by(id=int(game["Id"]))
+    # Execute the statement asynchronously
+    result = await session.execute(stmt)
+    # Fetch the first result
+    game_result = result.scalars().first()
+
+    mapper = inspect(UyaPlayerGameStats)
+    options = []
+
+    # Dynamically add selectinload for each relationship
+    for rel in mapper.relationships:
+        relationship_attribute = getattr(UyaPlayerGameStats, rel.key)
+        options.append(selectinload(relationship_attribute))
+    stmt = select(UyaPlayerGameStats).options(*options).filter_by(game_id=int(game["Id"]))
+    existing_player_game_stats = await session.execute(stmt)
+    existing_player_game_stats = existing_player_game_stats.scalars().all()
+    return game_result, existing_player_game_stats
+
+@retry_async(retries=3, delay=2)
+async def check_uya_gamehistory_exists_async(
+    game: dict,
+    session: Session
+) -> None:
+    # Need to add these to options to prevent lazy loading which fails with async
+    mapper = inspect(UyaGameHistory)
+    options = []
+
+    # Dynamically add selectinload for each relationship
+    for rel in mapper.relationships:
+        relationship_attribute = getattr(UyaGameHistory, rel.key)
+        options.append(selectinload(relationship_attribute))
+
+    #logger.debug(f"update_player_vanilla_stats_async: {player_id} Got options: {options}")
+    # Create a select statement with the filter condition
+    stmt = select(UyaGameHistory).options(*options).filter_by(id=int(game["Id"]))
+    # Execute the statement asynchronously
+    result = await session.execute(stmt)
+    # Fetch the first result
+    game_result = result.scalars().first()
+
+    return game_result is not None
 
 
 
