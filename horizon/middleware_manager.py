@@ -3,6 +3,8 @@ from copy import deepcopy
 import json
 from datetime import datetime
 import logging
+from tabulate import tabulate
+import requests
 
 from app.database import (
     CREDENTIALS,
@@ -10,7 +12,10 @@ from app.database import (
 )
 from app.utils.query_helpers import (
     update_player_vanilla_stats_async,
-    update_uya_gamehistory_async
+    update_uya_gamehistory_async,
+    check_uya_gamehistory_exists_async,
+    get_uya_gamehistory_and_player_stats_async,
+    get_uya_player_name_async
 )
 from horizon.middleware_api import (
     get_players_online, 
@@ -175,11 +180,124 @@ class UyaOnlineTracker:
                     async with SessionLocalAsync() as session:
                         for recent_game in recent_games:
                             logger.debug(f"[uya] update_recent_game_history: updating {recent_game}")
-                            await update_uya_gamehistory_async(deepcopy(recent_game), session)
+
+                            # Check if game exists in DB
+                            # if it doesn't, we want to wait for the below command to finish, and then post webhook
+
+                            if await check_uya_gamehistory_exists_async(deepcopy(recent_game), session):
+                                continue
+                            else:
+                                await update_uya_gamehistory_async(deepcopy(recent_game), session)
+                                # Post webhook
+                                await self.post_webhook(recent_game, session)
             except Exception as e:
                 logger.error("[uya] update_recent_game_history failed to update!", exc_info=True)
 
             await asyncio.sleep(self._recent_games_poll_interval)
+    
+    async def post_webhook(self, recent_game, session):
+        gamehistory, playerstats = await get_uya_gamehistory_and_player_stats_async(deepcopy(recent_game), session)
+
+        # Don't post webhook 
+        if len(playerstats) <= 1:
+            return
+
+        playerfull = []
+        for player in playerstats:
+            # Get their username
+            this_player = {"username": "UNKNOWN", "stats": player}
+            this_player["username"] = await get_uya_player_name_async(player.player_id, session)
+            if this_player["username"].startswith("CPU-"):
+                return
+            playerfull.append(this_player)
+
+        red_color = 16711680
+        green_color = 65280
+        blue_color = 255
+
+        color_map = {
+            'CTF': blue_color,
+            'Siege': red_color,
+            'Deathmatch': green_color,
+        }
+
+        map = gamehistory.game_map
+
+        if gamehistory.game_mode not in color_map:
+            color = green_color
+        else:
+            color = color_map[gamehistory.game_mode]
+
+        webhook_url = CREDENTIALS["uya"]["game_history_webhook_url"]
+        
+        str_to_post = f'```\nTime Limit: {gamehistory.time_limit}\nGame Duration: {gamehistory.game_duration:.2f} minutes\n\n'
+
+        ### Add win/loss
+        data = []
+        for player in playerfull:
+            data.append([player["username"], 'Win' if player["stats"].win else 'Loss'])
+        data = list(sorted(data, key=lambda x: '0' + x[0] if x[1] == 'Win' else '1' + x[0]))
+        data.insert(0, ["Player", "Win?"])
+
+        str_to_post += tabulate(data, headers="firstrow", tablefmt="github")
+
+        ### Add K/D
+        data = []
+        for player in playerfull:
+            data.append([player["username"], 'Win' if player["stats"].win else 'Loss', player["stats"].kills, player["stats"].deaths])
+        data = list(sorted(data, key=lambda x: '0' + x[0] if x[1] == 'Win' else '1' + x[0]))
+        for d in data:
+            d.pop(1)
+        data.insert(0, ["Player", "K", "D"])
+
+        str_to_post += '\n\n' + tabulate(data, headers="firstrow", tablefmt="github")
+
+        ### Add Caps/BD
+        data = []
+        if gamehistory.game_mode == 'CTF':
+            for player in playerfull:
+                data.append([player["username"], 'Win' if player["stats"].win else 'Loss', player["stats"].base_dmg, player["stats"].flag_captures])
+            data = list(sorted(data, key=lambda x: '0' + x[0] if x[1] == 'Win' else '1' + x[0]))
+
+            for d in data:
+                d.pop(1)
+            data.insert(0, ["Player", "BD", "Fl"])
+            str_to_post += '\n\n' + tabulate(data, headers="firstrow", tablefmt="github")
+
+        elif gamehistory.game_mode == 'Siege':
+            for player in playerfull:
+                data.append([player["username"], 'Win' if player["stats"].win else 'Loss', player["stats"].base_dmg, player["stats"].nodes])
+            data = list(sorted(data, key=lambda x: '0' + x[0] if x[1] == 'Win' else '1' + x[0]))
+
+            for d in data:
+                d.pop(1)
+            data.insert(0, ["Player", "BD", "Nodes"])
+            str_to_post += '\n\n' + tabulate(data, headers="firstrow", tablefmt="github")
+
+        ### End
+        str_to_post += f'```\nFor more info on this game visit: https://rac-horizon.com/uya/game-history/{gamehistory.id}'
+
+        # Define the payload
+        payload = {
+            # "content": f"```\n{formatted_table}\n```",
+            "username": "UYA Game Scores",  # Optional: Set a custom username
+            "embeds": [  # Optional: Add an embed message
+                {
+                    "title": f"{gamehistory.game_name} - {gamehistory.game_mode}@{map}",
+                    "description": f"\n{str_to_post}\n",
+                    "color": color,
+                }
+            ]
+        }
+
+        # Send a POST request
+        try:
+            response = requests.post(webhook_url, json=payload)
+            response.raise_for_status()  # Raise an error for bad HTTP status codes
+            print(f"Webhook delivered successfully! Status code: {response.status_code}")
+            print("Response:", response.text)
+        except requests.exceptions.RequestException as e:
+            print(f"Failed to deliver webhook: {e}")
 
 
 

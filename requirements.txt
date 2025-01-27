@@ -14,3 +14,4 @@ asyncpg
 fuzzywuzzy
 cachetools
 git+https://github.com/Horizon-Private-Server/horizon-uya-bot.git
+tabulate
