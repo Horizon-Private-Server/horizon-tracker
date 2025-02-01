@@ -183,6 +183,7 @@ class UyaOnlineTracker:
 
                             # Check if game exists in DB
                             # if it doesn't, we want to wait for the below command to finish, and then post webhook
+                            #await self.post_webhook(recent_game, session)
 
                             if await check_uya_gamehistory_exists_async(deepcopy(recent_game), session):
                                 continue
@@ -207,6 +208,7 @@ class UyaOnlineTracker:
             # Get their username
             this_player = {"username": "UNKNOWN", "stats": player}
             this_player["username"] = await get_uya_player_name_async(player.player_id, session)
+            this_player["username"] = this_player["username"][:7]
             if this_player["username"].startswith("CPU-"):
                 return
             playerfull.append(this_player)
@@ -239,7 +241,9 @@ class UyaOnlineTracker:
         data = list(sorted(data, key=lambda x: '0' + x[0] if x[1] == 'Win' else '1' + x[0]))
         data.insert(0, ["Player", "Win?"])
 
-        str_to_post += tabulate(data, headers="firstrow", tablefmt="github")
+        tabulate_format = 'colalign'
+
+        str_to_post += tabulate(data, headers="firstrow", tablefmt=tabulate_format)
 
         ### Add K/D
         data = []
@@ -250,7 +254,7 @@ class UyaOnlineTracker:
             d.pop(1)
         data.insert(0, ["Player", "K", "D"])
 
-        str_to_post += '\n\n' + tabulate(data, headers="firstrow", tablefmt="github")
+        str_to_post += '\n\n' + tabulate(data, headers="firstrow", tablefmt=tabulate_format)
 
         ### Add Caps/BD
         data = []
@@ -262,7 +266,7 @@ class UyaOnlineTracker:
             for d in data:
                 d.pop(1)
             data.insert(0, ["Player", "BD", "Fl"])
-            str_to_post += '\n\n' + tabulate(data, headers="firstrow", tablefmt="github")
+            str_to_post += '\n\n' + tabulate(data, headers="firstrow", tablefmt=tabulate_format)
 
         elif gamehistory.game_mode == 'Siege':
             for player in playerfull:
@@ -272,7 +276,7 @@ class UyaOnlineTracker:
             for d in data:
                 d.pop(1)
             data.insert(0, ["Player", "BD", "Nodes"])
-            str_to_post += '\n\n' + tabulate(data, headers="firstrow", tablefmt="github")
+            str_to_post += '\n\n' + tabulate(data, headers="firstrow", tablefmt=tabulate_format)
 
         ### End
         str_to_post += f'```\nFor more info on this game visit: https://rac-horizon.com/uya/game-history/{gamehistory.id}'
